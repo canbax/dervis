@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { SharedService } from './shared.service';
+import { TigerGraphApiClientService } from './tiger-graph-api.service';
 
 @Component({
   selector: 'app-root',
@@ -9,14 +10,17 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 export class AppComponent {
   title = 'dervis';
 
-  options: FormGroup;
+  constructor(private _dbApi: TigerGraphApiClientService, private _s: SharedService) {
+  }
 
-  constructor(fb: FormBuilder) {
-    this.options = fb.group({
-      bottom: 0,
-      fixed: false,
-      top: 0,
-    });
+  loadSampleData() {
+    this.clearData();
+    this._s.isLoading.next(true);
+    this._dbApi.sampleData((x: any) => { this._s.loadGraph(x); this._s.isLoading.next(false); this._s.add2GraphHistory('Load sample data'); });
+  }
+
+  clearData() {
+    this._s.cy.remove(this._s.cy.$());
   }
 
 }
