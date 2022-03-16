@@ -11,7 +11,7 @@ export class ErrorDialogComponent implements OnInit {
 
   title = '';
   content = '';
-  
+
   ngOnInit(): void {
   }
 
