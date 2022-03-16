@@ -1,6 +1,26 @@
 import { BehaviorSubject } from 'rxjs';
 import { isPrimitiveType } from './constants';
 
+export interface SchemaOutput {
+  error: boolean;
+  message: string;
+  results: {
+    EdgeTypes: { Name: string, Attributes: VertexOrEdgeAttribute[] }[],
+    VertexTypes: { Name: string, Attributes: VertexOrEdgeAttribute[] }[],
+  }
+}
+
+export interface VertexOrEdgeAttribute {
+  AttributeName: string,
+  AttributeType: { Name: string },
+  HasIndex: boolean,
+  IsPartOfCompositeKey: boolean,
+  IsPrimaryKey: boolean,
+  PrimaryIdAsAttribute: boolean,
+  internalAttribute: boolean,
+}
+
+
 export interface InterprettedQueryResult {
   error: boolean;
   message: string;

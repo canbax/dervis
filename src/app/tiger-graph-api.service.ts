@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SettingsService } from './settings.service';
-import { InterprettedQueryResult, GraphResponse, DbClient } from './data-types';
+import { InterprettedQueryResult, GraphResponse, DbClient, SchemaOutput } from './data-types';
 import { MatDialog } from '@angular/material/dialog';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -147,5 +147,24 @@ export class TigerGraphApiClientService implements DbClient {
         cb(r);
       }, error: this.errFn
     });
+  }
+
+  getGraphSchema(cb) {
+    const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
+    this._http.post(`${this.url}/schema`,
+      {
+        url: conf.url, graph: conf.graphName,
+        username: conf.username, password: conf.password,
+      })
+      .subscribe({
+        next: (x) => {
+          let y = x as SchemaOutput;
+          if (y.error) {
+            this.errFn(y);
+            return;
+          }
+          cb(x);
+        }, error: this.errFn
+      });
   }
 }

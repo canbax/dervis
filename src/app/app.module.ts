@@ -4,6 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
+import { TreeSelectComponent, TreeSelectData } from './tree-select/tree-select.component';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ServiceWorkerModule } from '@angular/service-worker';
@@ -18,12 +19,14 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-
+import { MatTreeModule } from '@angular/material/tree';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @NgModule({
   declarations: [
     AppComponent,
-    ErrorDialogComponent
+    ErrorDialogComponent,
+    TreeSelectComponent
   ],
   imports: [
     MatSidenavModule,
@@ -38,6 +41,8 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     HttpClientModule,
     MatSnackBarModule,
     MatDialogModule,
+    MatTreeModule,
+    MatCheckboxModule,
     BrowserModule,
     BrowserAnimationsModule,
     ServiceWorkerModule.register('ngsw-worker.js', {
@@ -47,7 +52,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
       registrationStrategy: 'registerWhenStable:30000'
     })
   ],
-  providers: [],
+  providers: [TreeSelectData],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
