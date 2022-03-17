@@ -1,0 +1,213 @@
+<mat-accordion multi>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>
+      <mat-panel-title> Tiger Graph Database Connection </mat-panel-title>
+      <mat-panel-description>
+        Connect to a tiger graph REST API
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <form>
+      <div class="d-flex">
+        <mat-form-field appearance="fill" class="w45">
+          <mat-label>Database URL</mat-label>
+          <input matInput [(ngModel)]="tigerGraphDbConf.url" name="url" />
+        </mat-form-field>
+        <br />
+        <mat-form-field appearance="fill" class="w45">
+          <mat-label>Database secret</mat-label>
+          <input matInput [(ngModel)]="tigerGraphDbConf.secret" name="secret" />
+        </mat-form-field>
+      </div>
+      <div class="d-flex p5">
+        <button
+          mat-stroked-button
+          class="w100"
+          matTooltip="Database URL and secret will be used to get a token"
+          (click)="refreshDbToken()"
+        >
+          Generate New Token <mat-icon>sync</mat-icon>
+        </button>
+      </div>
+      <div class="d-flex">
+        <mat-form-field appearance="fill">
+          <mat-label>Token expire</mat-label>
+          <input
+            matInput
+            disabled
+            [(ngModel)]="tigerGraphDbConf.tokenExpire"
+            name="tokenExpire"
+            [title]="tokenExpireDateStr"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Token</mat-label>
+          <input
+            matInput
+            [(ngModel)]="tigerGraphDbConf.token"
+            name="token"
+            matTooltip="You can paste your own token or generate a new one"
+          />
+          <span matSuffix>
+            <button
+              class="d-in"
+              mat-icon-button
+              [cdkCopyToClipboard]="tigerGraphDbConf.token"
+              (click)="copy(tigerGraphDbConf.token)"
+            >
+              <mat-icon>file_copy</mat-icon>
+            </button>
+          </span>
+        </mat-form-field>
+      </div>
+      <div class="d-flex">
+        <mat-form-field appearance="fill" class="w100">
+          <mat-label>Graph Name</mat-label>
+          <input
+            matInput
+            [(ngModel)]="tigerGraphDbConf.graphName"
+            name="graphName"
+          />
+        </mat-form-field>
+      </div>
+      <div class="d-flex">
+        <mat-form-field appearance="fill">
+          <mat-label>Database username</mat-label>
+          <input
+            matInput
+            [(ngModel)]="tigerGraphDbConf.username"
+            name="username"
+          />
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Database password</mat-label>
+          <input
+            matInput
+            type="password"
+            [(ngModel)]="tigerGraphDbConf.password"
+            name="password"
+          />
+        </mat-form-field>
+      </div>
+      <br />
+      <mat-form-field
+        appearance="fill"
+        class="w100"
+        matTooltip="Will send HTTP requests to the database"
+      >
+        <mat-label>Proxy Server URL</mat-label>
+        <input
+          matInput
+          type="text"
+          [(ngModel)]="tigerGraphDbConf.proxyUrl"
+          name="proxy-server-url"
+        />
+      </mat-form-field>
+    </form>
+
+    <button
+      class="p5"
+      mat-fab
+      (click)="saveDbConfig()"
+      matTooltip="save"
+    >
+      <mat-icon>save</mat-icon>
+    </button>
+  </mat-expansion-panel>
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>
+      <mat-panel-title> General </mat-panel-title>
+      <mat-panel-description>
+        Settings about visualization
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <form class="w100">
+      <!-- highlight style -->
+      <mat-card>
+        <mat-card-title>Hightlight Style:</mat-card-title>
+        <mat-card-content>
+          <mat-form-field appearance="fill">
+            <mat-label>Selected style</mat-label>
+            <mat-select
+              [(value)]="currHighlightIdx"
+              (selectionChange)="changeCurrHiglightStyle()"
+            >
+              <mat-option
+                *ngFor="let style of appConf.highlightStyles; let i = index"
+                [value]="i"
+              >
+                {{ style.name.getValue() }}
+              </mat-option>
+            </mat-select> </mat-form-field
+          >&nbsp;
+          <br />
+          <mat-form-field appearance="fill">
+            <mat-label>name</mat-label>
+            <input
+              matInput
+              type="text"
+              [(ngModel)]="currHighlightStyle.name"
+              name="curr-highlight-style-name"
+            /> </mat-form-field
+          >&nbsp;
+          <mat-form-field appearance="fill">
+            <mat-label>width</mat-label>
+            <input
+              matInput
+              type="number"
+              [(ngModel)]="currHighlightStyle.wid"
+              name="curr-highlight-style-wid"
+            /> </mat-form-field
+          >&nbsp;
+          <mat-form-field appearance="fill">
+            <mat-label>color</mat-label>
+            <input
+              matInput
+              type="color"
+              [(ngModel)]="currHighlightStyle.color"
+              name="curr-highlight-style-color"
+            />
+          </mat-form-field>
+          <br />
+          <button
+            class="p5"
+            matTooltip="update"
+            mat-icon-button
+            (click)="changeHighlightStyle()"
+          >
+            <mat-icon>save</mat-icon>
+          </button>
+          <button class="p5" mat-icon-button (click)="deleteHighlightStyle()">
+            <mat-icon>delete</mat-icon>
+          </button>
+          <button class="p5" mat-icon-button (click)="addHighlightStyle()">
+            <mat-icon>add</mat-icon>
+          </button>
+        </mat-card-content>
+
+        <mat-checkbox
+          [(ngModel)]="isIgnoreCaseInText"
+          (change)="changeConfig('isIgnoreCaseInText')"
+          name="is-ignore-case-in-text"
+          >Ignore case in text operations
+        </mat-checkbox>
+
+        <br />
+        <mat-form-field appearance="fill">
+          <mat-label>Layout algorithm</mat-label>
+          <mat-select
+            [(value)]="currLayout"
+            (selectionChange)="changeConfig('currLayout')"
+          >
+            <mat-option
+              *ngFor="let o of layoutOptions; let i = index"
+              [value]="o"
+            >
+              {{ o }}
+            </mat-option>
+          </mat-select> </mat-form-field
+        >&nbsp;
+      </mat-card>
+    </form>
+  </mat-expansion-panel>
+  <br />
+</mat-accordion>

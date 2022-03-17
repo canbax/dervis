@@ -16,26 +16,42 @@ export class AppComponent {
     this._dbApi.getGraphSchema((x: SchemaOutput) => {
       console.log(x);
       let tree = { 'Vertex': {}, 'Edge': {} };
-
-      for (let i = 0; i < x.results.EdgeTypes.length; i++) {
+      const cntEdgeType = x.results.EdgeTypes.length;
+      const cntVertexType = x.results.VertexTypes.length;
+      for (let i = 0; i < cntEdgeType; i++) {
         const attr = {};
         const currType = x.results.EdgeTypes[i].Name;
-        attr[currType] = {};
-        for (let j of x.results.EdgeTypes[i].Attributes) {
-          attr[currType][j.AttributeName] = null;
+        const edgeTypeAttr = x.results.EdgeTypes[i].Attributes;
+        for (let j of edgeTypeAttr) {
+          attr[j.AttributeName] = null;
         }
-        tree.Edge[currType] = attr;
+        if (edgeTypeAttr.length > 0) {
+          tree.Edge[`${currType} (${edgeTypeAttr.length})`] = attr;
+        } else {
+          tree.Edge[currType] = attr;
+        }
+
       }
-      for (let i = 0; i < x.results.VertexTypes.length; i++) {
+      for (let i = 0; i < cntVertexType; i++) {
         const attr = {};
         const currType = x.results.VertexTypes[i].Name;
-        attr[currType] = {};
-        for (let j of x.results.VertexTypes[i].Attributes) {
-          attr[currType][j.AttributeName] = null;
+        const nodeTypeAttr = x.results.VertexTypes[i].Attributes;
+        for (let j of nodeTypeAttr) {
+          attr[j.AttributeName] = null;
         }
-        tree.Vertex[currType] = attr;
+        if (nodeTypeAttr.length > 0) {
+          tree.Vertex[`${currType} (${nodeTypeAttr.length})`] = attr;
+        } else {
+          tree.Vertex[currType] = attr;
+        }
       }
-      _treeData.dataChange.next(_treeData.buildFileTree(tree, 0));
+      // rename vertex and edge
+      tree[`Vertex (${cntVertexType})`] = tree['Vertex'];
+      delete tree['Vertex'];
+      tree[`Edge (${cntEdgeType})`] = tree['Edge'];
+      delete tree['Edge'];
+      this._treeData.initialize(tree);
+
     });
   }
 

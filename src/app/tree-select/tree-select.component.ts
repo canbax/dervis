@@ -22,26 +22,28 @@ export class TodoItemFlatNode {
 /**
  * The Json object for to-do list data.
  */
-const TREE_DATA = {
-  Groceries: {
-    'Almond Meal flour': null,
-    'Organic eggs': null,
-    'Protein Powder': null,
-    Fruits: {
-      Apple: null,
-      Berries: ['Blueberry', 'Raspberry'],
-      Orange: null,
-    },
-  },
-  Reminders: ['Cook dinner', 'Read the Material Design spec', 'Upgrade Application to Angular'],
-};
+// const TREE_DATA = {
+//   Groceries: {
+//     'Almond Meal flour': null,
+//     'Organic eggs': null,
+//     'Protein Powder': null,
+//     Fruits: {
+//       Apple: null,
+//       Berries: ['Blueberry', 'Raspberry'],
+//       Orange: null,
+//     },
+//   },
+//   Reminders: ['Cook dinner', 'Read the Material Design spec', 'Upgrade Application to Angular'],
+// };
 
 /**
  * Checklist database, it can build a tree structured Json object.
  * Each node in Json object represents a to-do item or a category.
  * If a node is a category, it has children items and new items can be added under the category.
  */
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class TreeSelectData {
   dataChange = new BehaviorSubject<TodoItemNode[]>([]);
 
@@ -50,13 +52,13 @@ export class TreeSelectData {
   }
 
   constructor() {
-    this.initialize();
+    // this.initialize();
   }
 
-  initialize() {
+  initialize(treeData: any) {
     // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
     //     file node as children.
-    const data = this.buildFileTree(TREE_DATA, 0);
+    const data = this.buildFileTree(treeData, 0);
 
     // Notify the change.
     this.dataChange.next(data);
@@ -83,26 +85,13 @@ export class TreeSelectData {
       return accumulator.concat(node);
     }, []);
   }
-
-  /** Add an item to to-do list */
-  insertItem(parent: TodoItemNode, name: string) {
-    if (parent.children) {
-      parent.children.push({ item: name } as TodoItemNode);
-      this.dataChange.next(this.data);
-    }
-  }
-
-  updateItem(node: TodoItemNode, name: string) {
-    node.item = name;
-    this.dataChange.next(this.data);
-  }
 }
 
 @Component({
   selector: 'app-tree-select',
   templateUrl: './tree-select.component.html',
   styleUrls: ['./tree-select.component.css'],
-  providers: [TreeSelectData],
+  providers: [],
 })
 export class TreeSelectComponent implements OnInit {
 
@@ -137,7 +126,7 @@ export class TreeSelectComponent implements OnInit {
     this.treeControl = new FlatTreeControl<TodoItemFlatNode>(this.getLevel, this.isExpandable);
     this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
 
-    _database.dataChange.subscribe(data => {
+    this._database.dataChange.subscribe(data => {
       this.dataSource.data = data;
     });
   }
@@ -247,19 +236,6 @@ export class TreeSelectComponent implements OnInit {
       }
     }
     return null;
-  }
-
-  /** Select the category so we can insert the new item. */
-  addNewItem(node: TodoItemFlatNode) {
-    const parentNode = this.flatNodeMap.get(node);
-    this._database.insertItem(parentNode!, '');
-    this.treeControl.expand(node);
-  }
-
-  /** Save the node to database */
-  saveNode(node: TodoItemFlatNode, itemValue: string) {
-    const nestedNode = this.flatNodeMap.get(node);
-    this._database.updateItem(nestedNode!, itemValue);
   }
 
   ngOnInit(): void {
