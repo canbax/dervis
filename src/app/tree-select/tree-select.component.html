@@ -1,3 +1,13 @@
+<mat-form-field appearance="fill">
+  <mat-label>Filter vertex and edge types</mat-label>
+  <input
+    matInput
+    placeholder="Gene"
+    [(ngModel)]="searchTxt"
+    (keyup)="onSearchDebounced()"
+  />
+</mat-form-field>
+
 <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
   <mat-tree-node
     *matTreeNodeDef="let node"

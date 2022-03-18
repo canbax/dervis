@@ -19,11 +19,11 @@ export class AppComponent {
       const cntEdgeType = x.results.EdgeTypes.length;
       const cntVertexType = x.results.VertexTypes.length;
       for (let i = 0; i < cntEdgeType; i++) {
-        const attr = {};
+        const attr = [];
         const currType = x.results.EdgeTypes[i].Name;
         const edgeTypeAttr = x.results.EdgeTypes[i].Attributes;
         for (let j of edgeTypeAttr) {
-          attr[j.AttributeName] = null;
+          attr.push(j.AttributeName);
         }
         if (edgeTypeAttr.length > 0) {
           tree.Edge[`${currType} (${edgeTypeAttr.length})`] = attr;
@@ -33,11 +33,11 @@ export class AppComponent {
 
       }
       for (let i = 0; i < cntVertexType; i++) {
-        const attr = {};
+        const attr = [];
         const currType = x.results.VertexTypes[i].Name;
         const nodeTypeAttr = x.results.VertexTypes[i].Attributes;
         for (let j of nodeTypeAttr) {
-          attr[j.AttributeName] = null;
+          attr.push(j.AttributeName);
         }
         if (nodeTypeAttr.length > 0) {
           tree.Vertex[`${currType} (${nodeTypeAttr.length})`] = attr;

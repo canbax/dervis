@@ -2,7 +2,8 @@ import { Component, OnInit, Injectable } from '@angular/core';
 import { SelectionModel } from '@angular/cdk/collections';
 import { FlatTreeControl } from '@angular/cdk/tree';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, filter } from 'rxjs';
+import { debounce } from '../constants';
 
 /**
  * Node for to-do item
@@ -20,23 +21,6 @@ export class TodoItemFlatNode {
 }
 
 /**
- * The Json object for to-do list data.
- */
-// const TREE_DATA = {
-//   Groceries: {
-//     'Almond Meal flour': null,
-//     'Organic eggs': null,
-//     'Protein Powder': null,
-//     Fruits: {
-//       Apple: null,
-//       Berries: ['Blueberry', 'Raspberry'],
-//       Orange: null,
-//     },
-//   },
-//   Reminders: ['Cook dinner', 'Read the Material Design spec', 'Upgrade Application to Angular'],
-// };
-
-/**
  * Checklist database, it can build a tree structured Json object.
  * Each node in Json object represents a to-do item or a category.
  * If a node is a category, it has children items and new items can be added under the category.
@@ -45,20 +29,24 @@ export class TodoItemFlatNode {
   providedIn: 'root'
 })
 export class TreeSelectData {
+  originalTreeData: any;
   dataChange = new BehaviorSubject<TodoItemNode[]>([]);
 
   get data(): TodoItemNode[] {
     return this.dataChange.value;
   }
 
-  constructor() {
-    // this.initialize();
-  }
+  constructor() { }
 
+
+  /** Should only be called once!
+   * @param  {any} treeData
+   */
   initialize(treeData: any) {
+    this.originalTreeData = treeData;
     // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
     //     file node as children.
-    const data = this.buildFileTree(treeData, 0);
+    const data = this.buildFileTree(treeData, 0, '');
 
     // Notify the change.
     this.dataChange.next(data);
@@ -68,7 +56,10 @@ export class TreeSelectData {
    * Build the file structure tree. The `value` is the Json object, or a sub-tree of a Json object.
    * The return value is the list of `TodoItemNode`.
    */
-  buildFileTree(obj: { [key: string]: any }, level: number): TodoItemNode[] {
+  buildFileTree(obj: { [key: string]: any }, level: number, filterTxt: string): TodoItemNode[] {
+    if (!obj) {
+      return [];
+    }
     return Object.keys(obj).reduce<TodoItemNode[]>((accumulator, key) => {
       const value = obj[key];
       const node = new TodoItemNode();
@@ -76,14 +67,28 @@ export class TreeSelectData {
 
       if (value != null) {
         if (typeof value === 'object') {
-          node.children = this.buildFileTree(value, level + 1);
+          node.children = this.buildFileTree(value, level + 1, filterTxt);
+          if (node.children.length < 1) {
+            return accumulator;
+          }
         } else {
+          const hasTxt = value.toLowerCase().includes(filterTxt);
+          if (filterTxt.length > 0 && !hasTxt) {
+            return accumulator;
+          }
           node.item = value;
         }
+      } else {
+        return accumulator;
       }
 
       return accumulator.concat(node);
     }, []);
+  }
+
+  filterByTxt(txt: string) {
+    txt = txt.toLocaleLowerCase();
+    this.dataChange.next(this.buildFileTree(this.originalTreeData, 0, txt));
   }
 }
 
@@ -93,19 +98,16 @@ export class TreeSelectData {
   styleUrls: ['./tree-select.component.css'],
   providers: [],
 })
-export class TreeSelectComponent implements OnInit {
+export class TreeSelectComponent {
+
+  searchTxt: string = '';
+  onSearchDebounced: Function;
 
   /** Map from flat node to nested node. This helps us finding the nested node to be modified */
   flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
 
   /** Map from nested node to flattened node. This helps us to keep the same object for selection */
   nestedNodeMap = new Map<TodoItemNode, TodoItemFlatNode>();
-
-  /** A selected parent node to be inserted */
-  selectedParent: TodoItemFlatNode | null = null;
-
-  /** The new item's name */
-  newItemName = '';
 
   treeControl: FlatTreeControl<TodoItemFlatNode>;
 
@@ -129,6 +131,7 @@ export class TreeSelectComponent implements OnInit {
     this._database.dataChange.subscribe(data => {
       this.dataSource.data = data;
     });
+    this.onSearchDebounced = debounce(this.onSearch, 100, false);
   }
 
   getLevel = (node: TodoItemFlatNode) => node.level;
@@ -238,7 +241,11 @@ export class TreeSelectComponent implements OnInit {
     return null;
   }
 
-  ngOnInit(): void {
+  onSearch() {
+    this._database.filterByTxt(this.searchTxt);
+    this.treeControl.expandAll();
+    this.checklistSelection.clear();
   }
+
 
 }
