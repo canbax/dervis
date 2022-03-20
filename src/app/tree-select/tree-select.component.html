@@ -1,50 +1,93 @@
-<mat-form-field appearance="fill">
-  <mat-label>Filter vertex and edge types</mat-label>
-  <input
-    matInput
-    placeholder="Gene"
-    [(ngModel)]="searchTxt"
-    (keyup)="onSearchDebounced()"
-  />
-</mat-form-field>
+<div class="m1">
+  <mat-form-field appearance="fill" class="w100">
+    <mat-label>Search...</mat-label>
+    <input
+      matInput
+      placeholder="8542"
+      [(ngModel)]="searchTxt"
+      (keyup)="filterSchemaDebounced()"
+    />
+  </mat-form-field>
+</div>
+<div class="m1">
+  <mat-checkbox> Is on Database?</mat-checkbox>
+</div>
 
-<mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
-  <mat-tree-node
-    *matTreeNodeDef="let node"
-    matTreeNodeToggle
-    matTreeNodePadding
+<div class="m1">
+  <mat-expansion-panel
+    (opened)="isDetailedSearchOpen = true"
+    (closed)="isDetailedSearchOpen = false"
   >
-    <button mat-icon-button disabled></button>
-    <mat-checkbox
-      class="checklist-leaf-node"
-      [checked]="checklistSelection.isSelected(node)"
-      (change)="todoLeafItemSelectionToggle(node)"
-      >{{ node.item }}</mat-checkbox
-    >
-  </mat-tree-node>
+    <mat-expansion-panel-header>
+      <mat-panel-title> Search on types and attributes </mat-panel-title>
+    </mat-expansion-panel-header>
+    <div class="m1">
+      <mat-form-field appearance="fill" class="w100">
+        <mat-label>Filter types or attributes</mat-label>
+        <input
+          matInput
+          placeholder="Gene"
+          [(ngModel)]="filterSchemaTxt"
+          (keyup)="filterSchemaDebounced()"
+        />
+      </mat-form-field>
+      <mat-radio-group
+        aria-label="Search for "
+        [(ngModel)]="maxLevel"
+        (change)="changeTreeDepth()"
+      >
+        <mat-radio-button class="m1" [value]="1">Types</mat-radio-button>
+        <mat-radio-button class="m1" [value]="2">Attributes</mat-radio-button>
+      </mat-radio-group>
+    </div>
+    <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+      <mat-tree-node
+        *matTreeNodeDef="let node"
+        matTreeNodeToggle
+        matTreeNodePadding
+      >
+        <button mat-icon-button disabled></button>
+        <mat-checkbox
+          class="checklist-leaf-node"
+          [checked]="checklistSelection.isSelected(node)"
+          (change)="todoLeafItemSelectionToggle(node)"
+          >{{ node.item }}</mat-checkbox
+        >
+      </mat-tree-node>
 
-  <mat-tree-node
-    *matTreeNodeDef="let node; when: hasNoContent"
-    matTreeNodePadding
-  >
-    <button mat-icon-button disabled></button>
-  </mat-tree-node>
+      <mat-tree-node
+        *matTreeNodeDef="let node; when: hasNoContent"
+        matTreeNodePadding
+      >
+        <button mat-icon-button disabled></button>
+      </mat-tree-node>
 
-  <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding>
-    <button
-      mat-icon-button
-      matTreeNodeToggle
-      [attr.aria-label]="'Toggle ' + node.item"
-    >
-      <mat-icon class="mat-icon-rtl-mirror">
-        {{ treeControl.isExpanded(node) ? "expand_more" : "chevron_right" }}
-      </mat-icon>
-    </button>
-    <mat-checkbox
-      [checked]="descendantsAllSelected(node)"
-      [indeterminate]="descendantsPartiallySelected(node)"
-      (change)="todoItemSelectionToggle(node)"
-      >{{ node.item }}</mat-checkbox
-    >
-  </mat-tree-node>
-</mat-tree>
+      <mat-tree-node
+        *matTreeNodeDef="let node; when: hasChild"
+        matTreeNodePadding
+      >
+        <button
+          mat-icon-button
+          matTreeNodeToggle
+          [attr.aria-label]="'Toggle ' + node.item"
+        >
+          <mat-icon class="mat-icon-rtl-mirror">
+            {{ treeControl.isExpanded(node) ? "expand_more" : "chevron_right" }}
+          </mat-icon>
+        </button>
+        <mat-checkbox
+          [checked]="descendantsAllSelected(node)"
+          [indeterminate]="descendantsPartiallySelected(node)"
+          (change)="todoItemSelectionToggle(node)"
+          >{{ node.item }}</mat-checkbox
+        >
+      </mat-tree-node>
+    </mat-tree>
+  </mat-expansion-panel>
+</div>
+
+<div class="m1">
+  <button class="w100" mat-raised-button>
+    Search <mat-icon>search</mat-icon>
+  </button>
+</div>

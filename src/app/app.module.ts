@@ -23,6 +23,7 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTreeModule } from '@angular/material/tree';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
@@ -50,6 +51,7 @@ import { SettingsComponent } from './settings/settings.component';
     MatSelectModule,
     MatExpansionModule,
     MatInputModule,
+    MatRadioModule,
     MatCardModule,
     HttpClientModule,
     MatSnackBarModule,

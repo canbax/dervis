@@ -5,9 +5,14 @@ export interface SchemaOutput {
   error: boolean;
   message: string;
   results: {
-    EdgeTypes: { Name: string, Attributes: VertexOrEdgeAttribute[] }[],
-    VertexTypes: { Name: string, Attributes: VertexOrEdgeAttribute[] }[],
+    EdgeTypes: TigerGraphType[],
+    VertexTypes: TigerGraphType[],
   }
+}
+
+export interface TigerGraphType {
+  Name: string;
+  Attributes: VertexOrEdgeAttribute[]
 }
 
 export interface VertexOrEdgeAttribute {

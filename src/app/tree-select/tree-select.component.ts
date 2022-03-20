@@ -4,6 +4,8 @@ import { FlatTreeControl } from '@angular/cdk/tree';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { BehaviorSubject, filter } from 'rxjs';
 import { debounce } from '../constants';
+import { TigerGraphApiClientService } from '../tiger-graph-api.service';
+import { SchemaOutput, TigerGraphType } from '../data-types';
 
 /**
  * Node for to-do item
@@ -42,11 +44,11 @@ export class TreeSelectData {
   /** Should only be called once!
    * @param  {any} treeData
    */
-  initialize(treeData: any) {
+  initialize(treeData: any, maxLevel: number) {
     this.originalTreeData = treeData;
     // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
     //     file node as children.
-    const data = this.buildFileTree(treeData, 0, '');
+    const data = this.buildFileTree(treeData, 0, '', maxLevel);
 
     // Notify the change.
     this.dataChange.next(data);
@@ -56,26 +58,33 @@ export class TreeSelectData {
    * Build the file structure tree. The `value` is the Json object, or a sub-tree of a Json object.
    * The return value is the list of `TodoItemNode`.
    */
-  buildFileTree(obj: { [key: string]: any }, level: number, filterTxt: string): TodoItemNode[] {
+  buildFileTree(obj: { [key: string]: any }, level: number, filterTxt: string, maxLevel: number): TodoItemNode[] {
     if (!obj) {
       return [];
     }
+
     return Object.keys(obj).reduce<TodoItemNode[]>((accumulator, key) => {
       const value = obj[key];
       const node = new TodoItemNode();
       node.item = key;
 
       if (value != null) {
+        let strRepresentation = value;
         if (typeof value === 'object') {
-          node.children = this.buildFileTree(value, level + 1, filterTxt);
-          if (node.children.length < 1) {
-            return accumulator;
+          strRepresentation = key;
+        }
+        const hasTxt = strRepresentation.toLowerCase().includes(filterTxt);
+        if (level == maxLevel && filterTxt.length > 0 && !hasTxt) {
+          return accumulator;
+        }
+        if (typeof value === 'object') {
+          if (level < maxLevel) {
+            node.children = this.buildFileTree(value, level + 1, filterTxt, maxLevel);
+            if (node.children.length < 1) {
+              return accumulator;
+            }
           }
         } else {
-          const hasTxt = value.toLowerCase().includes(filterTxt);
-          if (filterTxt.length > 0 && !hasTxt) {
-            return accumulator;
-          }
           node.item = value;
         }
       } else {
@@ -86,9 +95,9 @@ export class TreeSelectData {
     }, []);
   }
 
-  filterByTxt(txt: string) {
+  filterByTxt(txt: string, maxLevel: number) {
     txt = txt.toLocaleLowerCase();
-    this.dataChange.next(this.buildFileTree(this.originalTreeData, 0, txt));
+    this.dataChange.next(this.buildFileTree(this.originalTreeData, 0, txt, maxLevel));
   }
 }
 
@@ -100,8 +109,11 @@ export class TreeSelectData {
 })
 export class TreeSelectComponent {
 
+  filterSchemaTxt: string = '';
   searchTxt: string = '';
-  onSearchDebounced: Function;
+  maxLevel: number = 1;
+  filterSchemaDebounced: Function;
+  isDetailedSearchOpen = false;
 
   /** Map from flat node to nested node. This helps us finding the nested node to be modified */
   flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
@@ -118,7 +130,7 @@ export class TreeSelectComponent {
   /** The selection for checklist */
   checklistSelection = new SelectionModel<TodoItemFlatNode>(true /* multiple */);
 
-  constructor(private _database: TreeSelectData) {
+  constructor(private _database: TreeSelectData, private _dbApi: TigerGraphApiClientService) {
     this.treeFlattener = new MatTreeFlattener(
       this.transformer,
       this.getLevel,
@@ -131,7 +143,51 @@ export class TreeSelectComponent {
     this._database.dataChange.subscribe(data => {
       this.dataSource.data = data;
     });
-    this.onSearchDebounced = debounce(this.onSearch, 100, false);
+    this.filterSchemaDebounced = debounce(this.onSearch, 250, false);
+
+    this._dbApi.getGraphSchema((x: SchemaOutput) => {
+      console.log(x);
+      let tree = { 'Vertex': {}, 'Edge': {} };
+      const cntEdgeType = x.results.EdgeTypes.length;
+      const cntVertexType = x.results.VertexTypes.length;
+      this.parseSchemaData(tree, x.results.EdgeTypes, false);
+      this.parseSchemaData(tree, x.results.VertexTypes, true);
+      // rename vertex and edge
+      tree[`Vertex (${cntVertexType})`] = tree['Vertex'];
+      delete tree['Vertex'];
+      tree[`Edge (${cntEdgeType})`] = tree['Edge'];
+      delete tree['Edge'];
+      this._database.initialize(tree, this.maxLevel);
+    });
+  }
+
+  private parseSchemaData(tree: any, typeArr: TigerGraphType[], isVertex: boolean) {
+    for (let i = 0; i < typeArr.length; i++) {
+      const attr = [];
+      const currType = typeArr[i].Name;
+      const typeAttr = typeArr[i].Attributes;
+      for (let j of typeAttr) {
+        attr.push(j.AttributeName);
+      }
+      if (typeAttr.length > 0) {
+        if (isVertex) {
+          tree.Vertex[`${currType} (${typeAttr.length})`] = attr;
+        } else {
+          tree.Edge[`${currType} (${typeAttr.length})`] = attr;
+        }
+
+      } else {
+        if (isVertex) {
+          tree.Vertex[currType] = attr;
+        } else {
+          tree.Edge[currType] = attr;
+        }
+      }
+    }
+  }
+
+  changeTreeDepth() {
+    this.onSearch();
   }
 
   getLevel = (node: TodoItemFlatNode) => node.level;
@@ -242,7 +298,7 @@ export class TreeSelectComponent {
   }
 
   onSearch() {
-    this._database.filterByTxt(this.searchTxt);
+    this._database.filterByTxt(this.filterSchemaTxt, this.maxLevel);
     this.treeControl.expandAll();
     this.checklistSelection.clear();
   }
