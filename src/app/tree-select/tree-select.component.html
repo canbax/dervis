@@ -10,7 +10,8 @@
   </mat-form-field>
 </div>
 <div class="m1">
-  <mat-checkbox> Is on Database?</mat-checkbox>
+  <mat-checkbox class="m1"> Is on Database?</mat-checkbox>
+  <mat-checkbox class="m1"> Is case sensitive?</mat-checkbox>
 </div>
 
 <div class="m1">
@@ -39,6 +40,8 @@
         <mat-radio-button class="m1" [value]="1">Types</mat-radio-button>
         <mat-radio-button class="m1" [value]="2">Attributes</mat-radio-button>
       </mat-radio-group>
+      <button mat-button (click)="collapseTree()">Collapse</button>
+      <button mat-button (click)="expandTree()">Expand</button>
     </div>
     <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
       <mat-tree-node
@@ -87,7 +90,7 @@
 </div>
 
 <div class="m1">
-  <button class="w100" mat-raised-button>
+  <button class="w100" mat-raised-button (click)="searchOnDB()">
     Search <mat-icon>search</mat-icon>
   </button>
 </div>

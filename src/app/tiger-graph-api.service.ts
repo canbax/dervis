@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SettingsService } from './settings.service';
-import { InterprettedQueryResult, GraphResponse, DbClient, SchemaOutput } from './data-types';
+import { InterprettedQueryResult, GraphResponse, DbClient, SchemaOutput, TigerGraphVertexType, TigerGraphEdgeType } from './data-types';
 import { MatDialog } from '@angular/material/dialog';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -12,6 +12,10 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class TigerGraphApiClientService implements DbClient {
 
   url: string = '';
+  dataSchema: {
+    EdgeTypes: TigerGraphEdgeType[],
+    VertexTypes: TigerGraphVertexType[],
+  }
   constructor(private _http: HttpClient, private _c: SettingsService, public dialog: MatDialog, private _snackBar: MatSnackBar) {
     this._c.appConf.tigerGraphDbConfig.proxyUrl.subscribe((x: string) => {
       this.url = x;
@@ -163,6 +167,7 @@ export class TigerGraphApiClientService implements DbClient {
             this.errFn(y);
             return;
           }
+          this.dataSchema = y.results;
           cb(x);
         }, error: this.errFn
       });

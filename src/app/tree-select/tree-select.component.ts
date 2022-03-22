@@ -5,7 +5,9 @@ import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree'
 import { BehaviorSubject, filter } from 'rxjs';
 import { debounce } from '../constants';
 import { TigerGraphApiClientService } from '../tiger-graph-api.service';
-import { SchemaOutput, TigerGraphType } from '../data-types';
+import { SchemaOutput, TigerGraphEdgeType, TigerGraphVertexType } from '../data-types';
+import { SharedService } from '../shared.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 /**
  * Node for to-do item
@@ -130,7 +132,7 @@ export class TreeSelectComponent {
   /** The selection for checklist */
   checklistSelection = new SelectionModel<TodoItemFlatNode>(true /* multiple */);
 
-  constructor(private _database: TreeSelectData, private _dbApi: TigerGraphApiClientService) {
+  constructor(private _database: TreeSelectData, private _dbApi: TigerGraphApiClientService, private _s: SharedService, private _snackBar: MatSnackBar) {
     this.treeFlattener = new MatTreeFlattener(
       this.transformer,
       this.getLevel,
@@ -161,7 +163,7 @@ export class TreeSelectComponent {
     });
   }
 
-  private parseSchemaData(tree: any, typeArr: TigerGraphType[], isVertex: boolean) {
+  private parseSchemaData(tree: any, typeArr: TigerGraphVertexType[] | TigerGraphEdgeType[], isVertex: boolean) {
     for (let i = 0; i < typeArr.length; i++) {
       const attr = [];
       const currType = typeArr[i].Name;
@@ -303,5 +305,32 @@ export class TreeSelectComponent {
     this.checklistSelection.clear();
   }
 
+  searchOnDB() {
+    const selected: TodoItemFlatNode[] = this.checklistSelection.selected;
+    // search only for IDs in all types
+    if (!selected || selected.length < 1) {
+      const gsql = `
+      result = SELECT x FROM :x where lower(x.Id) LIKE "%${this.searchTxt}%";
+      print result;`;
+      this._dbApi.runQuery(gsql, (x) => {
+        if (!x || !(x.results)) {
+          this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
+          return;
+        }
+        this._s.loadGraph({ nodes: x.results[0].results, edges: [] });
+        this._s.add2GraphHistory('run interpretted query');
+      });
+    } else {
 
+    }
+    console.log(selected);
+  }
+
+  collapseTree() {
+    this.treeControl.collapseAll();
+  }
+
+  expandTree() {
+    this.treeControl.expandAll();
+  }
 }
