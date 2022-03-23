@@ -320,25 +320,32 @@ export class TreeSelectComponent {
   searchOnDB() {
     const selected: TodoItemFlatNode[] = this.checklistSelection.selected;
     const graph = this._settings.appConf.tigerGraphDbConfig.graphName.getValue();
+    let gsql = '';
     // search only for IDs in all types
     if (!selected || selected.length < 1) {
-      const gsql =
+      gsql =
         `INTERPRET QUERY () FOR GRAPH ${graph} {
-        start = {ANY};   
-        results = SELECT x FROM start:x where lower(x.Id) LIKE "%${this.searchTxt}%";
+        results = SELECT x FROM :x where lower(x.Id) LIKE "%${this.searchTxt}%";
         PRINT results;
-    }`
-      this._dbApi.runQuery(gsql, (x) => {
-        if (!x || !(x.results)) {
-          this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
-          return;
-        }
-        this._s.loadGraph({ nodes: x.results[0].results, edges: [] });
-        this._s.add2GraphHistory('run interpretted query');
-      });
-    } else {
+        }`;
 
+    } else if (this.maxLevel == 1) {
+      const vertexTypes = selected.filter(x => x.level == 1).map(x => x.item.split('(')[0].trim()).join('|');
+      gsql =
+        `INTERPRET QUERY () FOR GRAPH ${graph} {
+        results = SELECT x FROM (${vertexTypes}):x where lower(x.Id) LIKE "%${this.searchTxt}%";
+        PRINT results;
+        }`;
     }
+
+    this._dbApi.runQuery(gsql, (x) => {
+      if (!x || !(x.results)) {
+        this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
+        return;
+      }
+      this._s.loadGraph({ nodes: x.results[0].results, edges: [] });
+      this._s.add2GraphHistory('run interpretted query');
+    });
     console.log(selected);
   }
 
