@@ -3,6 +3,7 @@ import cytoscape from 'cytoscape';
 import fcose from 'cytoscape-fcose';
 import expandCollapse from 'cytoscape-expand-collapse';
 import contextMenus from 'cytoscape-context-menus';
+import viewUtilities from 'cytoscape-view-utilities';
 
 import { Layout, LAYOUT_ANIM_DUR, expandCollapseCuePosition, EXPAND_COLLAPSE_CUE_SIZE, debounce, MAX_HIGHLIGHT_CNT, deepCopy, COLLAPSED_EDGE_CLASS, COMPOUND_CLASS, COLLAPSED_NODE_CLASS, OBJ_INFO_UPDATE_DELAY, isPrimitiveType } from './constants';
 import { GraphResponse, NodeResponse, InterprettedQueryResult, TableData, isNodeResponse, isEdgeResponse, EdgeResponse, GraphHistoryItem, TigerGraphDbConfig } from './data-types';
@@ -53,6 +54,10 @@ export class SharedService {
     expandCollapse(cytoscape);
     this.bindExpandCollapseExt();
     this.bindContextMenus();
+
+    // register view utilities extension
+    viewUtilities(cytoscape);
+    this.bindViewUtilitiesExtension();
 
     const fn = debounce((e) => { this.elemSelectChanged.next(e.type === 'select'); }, OBJ_INFO_UPDATE_DELAY);
     this.cy.on('select unselect', fn);

@@ -3,11 +3,12 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { FlatTreeControl } from '@angular/cdk/tree';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { BehaviorSubject, filter } from 'rxjs';
-import { debounce } from '../constants';
+import { debounce, deepCopy } from '../constants';
 import { TigerGraphApiClientService } from '../tiger-graph-api.service';
 import { SchemaOutput, TigerGraphEdgeType, TigerGraphVertexType } from '../data-types';
 import { SharedService } from '../shared.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { SettingsService } from '../settings.service';
 
 /**
  * Node for to-do item
@@ -34,6 +35,7 @@ export class TodoItemFlatNode {
 })
 export class TreeSelectData {
   originalTreeData: any;
+  edgeTypesKey: string;
   dataChange = new BehaviorSubject<TodoItemNode[]>([]);
 
   get data(): TodoItemNode[] {
@@ -46,11 +48,15 @@ export class TreeSelectData {
   /** Should only be called once!
    * @param  {any} treeData
    */
-  initialize(treeData: any, maxLevel: number) {
+  initialize(treeData: any, maxLevel: number, edgeTypesKey: string) {
     this.originalTreeData = treeData;
-    // Build the tree nodes from Json object. The result is a list of `TodoItemNode` with nested
-    //     file node as children.
-    const data = this.buildFileTree(treeData, 0, '', maxLevel);
+    this.edgeTypesKey = edgeTypesKey;
+    // Edge types do NOT have id. So it cannot be searched if maxLevel is 1
+    const d = deepCopy(treeData);
+    if (maxLevel == 1) {
+      delete d[edgeTypesKey];
+    }
+    const data = this.buildFileTree(d, 0, '', maxLevel);
 
     // Notify the change.
     this.dataChange.next(data);
@@ -99,7 +105,12 @@ export class TreeSelectData {
 
   filterByTxt(txt: string, maxLevel: number) {
     txt = txt.toLocaleLowerCase();
-    this.dataChange.next(this.buildFileTree(this.originalTreeData, 0, txt, maxLevel));
+
+    const d = deepCopy(this.originalTreeData);
+    if (maxLevel == 1) {
+      delete d[this.edgeTypesKey];
+    }
+    this.dataChange.next(this.buildFileTree(d, 0, txt, maxLevel));
   }
 }
 
@@ -132,7 +143,7 @@ export class TreeSelectComponent {
   /** The selection for checklist */
   checklistSelection = new SelectionModel<TodoItemFlatNode>(true /* multiple */);
 
-  constructor(private _database: TreeSelectData, private _dbApi: TigerGraphApiClientService, private _s: SharedService, private _snackBar: MatSnackBar) {
+  constructor(private _database: TreeSelectData, private _dbApi: TigerGraphApiClientService, private _s: SharedService, private _snackBar: MatSnackBar, private _settings: SettingsService) {
     this.treeFlattener = new MatTreeFlattener(
       this.transformer,
       this.getLevel,
@@ -157,9 +168,10 @@ export class TreeSelectComponent {
       // rename vertex and edge
       tree[`Vertex (${cntVertexType})`] = tree['Vertex'];
       delete tree['Vertex'];
-      tree[`Edge (${cntEdgeType})`] = tree['Edge'];
+      const edgeTypesKey = `Edge (${cntEdgeType})`;
+      tree[edgeTypesKey] = tree['Edge'];
       delete tree['Edge'];
-      this._database.initialize(tree, this.maxLevel);
+      this._database.initialize(tree, this.maxLevel, edgeTypesKey);
     });
   }
 
@@ -307,11 +319,15 @@ export class TreeSelectComponent {
 
   searchOnDB() {
     const selected: TodoItemFlatNode[] = this.checklistSelection.selected;
+    const graph = this._settings.appConf.tigerGraphDbConfig.graphName.getValue();
     // search only for IDs in all types
     if (!selected || selected.length < 1) {
-      const gsql = `
-      result = SELECT x FROM :x where lower(x.Id) LIKE "%${this.searchTxt}%";
-      print result;`;
+      const gsql =
+        `INTERPRET QUERY () FOR GRAPH ${graph} {
+        start = {ANY};   
+        results = SELECT x FROM start:x where lower(x.Id) LIKE "%${this.searchTxt}%";
+        PRINT results;
+    }`
       this._dbApi.runQuery(gsql, (x) => {
         if (!x || !(x.results)) {
           this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');

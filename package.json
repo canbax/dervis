@@ -29,6 +29,7 @@
     "cytoscape-context-menus": "github:iVis-at-Bilkent/cytoscape.js-context-menus#unstable",
     "cytoscape-expand-collapse": "github:iVis-at-Bilkent/cytoscape.js-expand-collapse#unstable",
     "cytoscape-fcose": "^2.1.0",
+    "cytoscape-view-utilities": "github:iVis-at-Bilkent/cytoscape.js-view-utilities#unstable",
     "rxjs": "~7.5.5",
     "tslib": "^2.3.1",
     "zone.js": "~0.11.5"

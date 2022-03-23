@@ -9,3 +9,26 @@
 .spacer {
   flex: 1 1 auto;
 }
+
+.side-bar {
+  width: 30vw;
+}
+
+.sidenav-content {
+  display: flex;
+  flex-direction: column;
+}
+
+#cy {
+  /* position: absolute; */
+  top: 0;
+  left: 0;
+  width: 99%;
+  height: 99%;
+}
+
+.cy-container {
+  position: relative;
+  flex: 1;
+  overflow: auto;
+}
