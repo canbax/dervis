@@ -5,7 +5,7 @@
       matInput
       placeholder="8542"
       [(ngModel)]="searchTxt"
-      (keyup)="filterSchemaDebounced()"
+      (keydown.enter)="searchOnDB()"
     />
   </mat-form-field>
 </div>

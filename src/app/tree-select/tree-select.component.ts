@@ -321,19 +321,60 @@ export class TreeSelectComponent {
     const selected: TodoItemFlatNode[] = this.checklistSelection.selected;
     const graph = this._settings.appConf.tigerGraphDbConfig.graphName.getValue();
     let gsql = '';
-    // search only for IDs in all types
+    // search only for IDs in all Vertex types
     if (!selected || selected.length < 1) {
       gsql =
         `INTERPRET QUERY () FOR GRAPH ${graph} {
         results = SELECT x FROM :x where lower(x.Id) LIKE "%${this.searchTxt}%";
         PRINT results;
         }`;
-
-    } else if (this.maxLevel == 1) {
+    } else if (this.maxLevel == 1) { // search only for IDs in selected Vertex types
       const vertexTypes = selected.filter(x => x.level == 1).map(x => x.item.split('(')[0].trim()).join('|');
       gsql =
         `INTERPRET QUERY () FOR GRAPH ${graph} {
         results = SELECT x FROM (${vertexTypes}):x where lower(x.Id) LIKE "%${this.searchTxt}%";
+        PRINT results;
+        }`;
+    } else if (this.maxLevel == 2) {
+      const vertexQuery = {};
+      const edgeQuery = {};
+      const attributeItems = selected.filter(x => x.level == 2);
+      for (let i of attributeItems) {
+        const parent = this.getParentNode(i);
+        const grandParent = this.getParentNode(parent);
+        const typeName = parent.item.split('(')[0].trim();
+        if (grandParent.item.startsWith('Vertex')) {
+          if (!vertexQuery[typeName]) {
+            vertexQuery[typeName] = [];
+          }
+          vertexQuery[typeName].push(i.item);
+        } else {
+          if (!edgeQuery[typeName]) {
+            edgeQuery[typeName] = [];
+          }
+          edgeQuery[typeName].push(i.item);
+        }
+      }
+      const typeItems = selected.filter(x => x.level == 1);
+      for (let i of typeItems) {
+        const parent = this.getParentNode(i);
+        const typeName = i.item.split('(')[0].trim();
+        if (parent.item.startsWith('Vertex')) {
+          if (!vertexQuery[typeName]) {
+            vertexQuery[typeName] = [];
+          }
+        } else {
+          if (!edgeQuery[typeName]) {
+            edgeQuery[typeName] = [];
+          }
+        }
+      }
+
+      console.log(vertexQuery, edgeQuery);
+      const types = selected.filter(x => x.level == 1).map(x => x.item.split('(')[0].trim()).join('|');
+      gsql =
+        `INTERPRET QUERY () FOR GRAPH ${graph} {
+        results = SELECT x FROM (${types}):x where lower(x.Id) LIKE "%${this.searchTxt}%";
         PRINT results;
         }`;
     }
