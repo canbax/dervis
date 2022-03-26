@@ -10,8 +10,10 @@
   </mat-form-field>
 </div>
 <div class="m1">
-  <mat-checkbox class="m1"> Is on Database?</mat-checkbox>
-  <mat-checkbox class="m1"> Is case sensitive?</mat-checkbox>
+  <mat-checkbox class="m1" [(ngModel)]="isOnDB"> Is on Database?</mat-checkbox>
+  <mat-checkbox class="m1" [(ngModel)]="isCaseSense">
+    Is case sensitive?
+  </mat-checkbox>
 </div>
 
 <div class="m1">
@@ -31,15 +33,16 @@
           [(ngModel)]="filterSchemaTxt"
           (keyup)="filterSchemaDebounced()"
         />
+        <button
+          *ngIf="filterSchemaTxt"
+          matSuffix
+          mat-icon-button
+          aria-label="Clear"
+          (click)="filterSchemaTxt = ''; filterSchemaDebounced()"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
       </mat-form-field>
-      <mat-radio-group
-        aria-label="Search for "
-        [(ngModel)]="maxLevel"
-        (change)="changeTreeDepth()"
-      >
-        <mat-radio-button class="m1" [value]="1">Types</mat-radio-button>
-        <mat-radio-button class="m1" [value]="2">Attributes</mat-radio-button>
-      </mat-radio-group>
       <button mat-button (click)="collapseTree()">Collapse</button>
       <button mat-button (click)="expandTree()">Expand</button>
     </div>
@@ -54,8 +57,16 @@
           class="checklist-leaf-node"
           [checked]="checklistSelection.isSelected(node)"
           (change)="todoLeafItemSelectionToggle(node)"
-          >{{ node.item }}</mat-checkbox
         >
+          {{ node.item }}
+        </mat-checkbox>
+        <button
+          mat-icon-button
+          [cdkCopyToClipboard]="node.item.split('(')[0].trim()"
+          (click)="copyTypeName(node.item)"
+        >
+          <mat-icon>file_copy</mat-icon>
+        </button>
       </mat-tree-node>
 
       <mat-tree-node
@@ -82,15 +93,27 @@
           [checked]="descendantsAllSelected(node)"
           [indeterminate]="descendantsPartiallySelected(node)"
           (change)="todoItemSelectionToggle(node)"
-          >{{ node.item }}</mat-checkbox
+          >{{ node.item }}
+        </mat-checkbox>
+        <button
+          mat-icon-button
+          [cdkCopyToClipboard]="node.item.split('(')[0].trim()"
+          (click)="copyTypeName(node.item)"
         >
+          <mat-icon>file_copy</mat-icon>
+        </button>
       </mat-tree-node>
     </mat-tree>
   </mat-expansion-panel>
 </div>
 
 <div class="m1">
-  <button class="w100" mat-raised-button (click)="searchOnDB()">
+  <button
+    class="w100"
+    [disabled]="searchTxt.length < 1"
+    mat-raised-button
+    (click)="searchOnDB()"
+  >
     Search <mat-icon>search</mat-icon>
   </button>
 </div>

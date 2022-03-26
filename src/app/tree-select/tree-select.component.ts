@@ -5,7 +5,7 @@ import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree'
 import { BehaviorSubject, filter } from 'rxjs';
 import { debounce, deepCopy } from '../constants';
 import { TigerGraphApiClientService } from '../tiger-graph-api.service';
-import { SchemaOutput, TigerGraphEdgeType, TigerGraphVertexType } from '../data-types';
+import { SchemaOutput, TigerGraphEdgeType, TigerGraphVertexType, Str2Bool, Str2StrBool } from '../data-types';
 import { SharedService } from '../shared.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { SettingsService } from '../settings.service';
@@ -35,8 +35,8 @@ export class TodoItemFlatNode {
 })
 export class TreeSelectData {
   originalTreeData: any;
-  edgeTypesKey: string;
   dataChange = new BehaviorSubject<TodoItemNode[]>([]);
+  readonly MAX_TREE_DEPTH = 2;
 
   get data(): TodoItemNode[] {
     return this.dataChange.value;
@@ -48,15 +48,9 @@ export class TreeSelectData {
   /** Should only be called once!
    * @param  {any} treeData
    */
-  initialize(treeData: any, maxLevel: number, edgeTypesKey: string) {
+  initialize(treeData: any) {
     this.originalTreeData = treeData;
-    this.edgeTypesKey = edgeTypesKey;
-    // Edge types do NOT have id. So it cannot be searched if maxLevel is 1
-    const d = deepCopy(treeData);
-    if (maxLevel == 1) {
-      delete d[edgeTypesKey];
-    }
-    const data = this.buildFileTree(d, 0, '', maxLevel);
+    const data = this.buildFileTree(deepCopy(treeData), 0, '');
 
     // Notify the change.
     this.dataChange.next(data);
@@ -66,7 +60,7 @@ export class TreeSelectData {
    * Build the file structure tree. The `value` is the Json object, or a sub-tree of a Json object.
    * The return value is the list of `TodoItemNode`.
    */
-  buildFileTree(obj: { [key: string]: any }, level: number, filterTxt: string, maxLevel: number): TodoItemNode[] {
+  buildFileTree(obj: { [key: string]: any }, level: number, filterTxt: string): TodoItemNode[] {
     if (!obj) {
       return [];
     }
@@ -82,15 +76,13 @@ export class TreeSelectData {
           strRepresentation = key;
         }
         const hasTxt = strRepresentation.toLowerCase().includes(filterTxt);
-        if (level == maxLevel && filterTxt.length > 0 && !hasTxt) {
+        if (this.MAX_TREE_DEPTH == level && filterTxt.length > 0 && !hasTxt) {
           return accumulator;
         }
         if (typeof value === 'object') {
-          if (level < maxLevel) {
-            node.children = this.buildFileTree(value, level + 1, filterTxt, maxLevel);
-            if (node.children.length < 1) {
-              return accumulator;
-            }
+          node.children = this.buildFileTree(value, level + 1, filterTxt);
+          if (node.children.length < 1 && filterTxt.length > 0 && !hasTxt) {
+            return accumulator;
           }
         } else {
           node.item = value;
@@ -103,14 +95,9 @@ export class TreeSelectData {
     }, []);
   }
 
-  filterByTxt(txt: string, maxLevel: number) {
+  filterByTxt(txt: string) {
     txt = txt.toLocaleLowerCase();
-
-    const d = deepCopy(this.originalTreeData);
-    if (maxLevel == 1) {
-      delete d[this.edgeTypesKey];
-    }
-    this.dataChange.next(this.buildFileTree(d, 0, txt, maxLevel));
+    this.dataChange.next(this.buildFileTree(this.originalTreeData, 0, txt));
   }
 }
 
@@ -124,9 +111,13 @@ export class TreeSelectComponent {
 
   filterSchemaTxt: string = '';
   searchTxt: string = '';
-  maxLevel: number = 1;
   filterSchemaDebounced: Function;
   isDetailedSearchOpen = false;
+  vertexPrimaryIds: Str2Bool = {};
+  isCaseSense = true;
+  isOnDB = true;
+  vertexKey: string = '';
+  edgeKey: string = '';
 
   /** Map from flat node to nested node. This helps us finding the nested node to be modified */
   flatNodeMap = new Map<TodoItemFlatNode, TodoItemNode>();
@@ -163,15 +154,18 @@ export class TreeSelectComponent {
       let tree = { 'Vertex': {}, 'Edge': {} };
       const cntEdgeType = x.results.EdgeTypes.length;
       const cntVertexType = x.results.VertexTypes.length;
+      this.vertexPrimaryIds = {};
       this.parseSchemaData(tree, x.results.EdgeTypes, false);
       this.parseSchemaData(tree, x.results.VertexTypes, true);
+      this.vertexKey = `Vertex (${cntVertexType})`;
       // rename vertex and edge
-      tree[`Vertex (${cntVertexType})`] = tree['Vertex'];
+      tree[this.vertexKey] = tree['Vertex'];
       delete tree['Vertex'];
-      const edgeTypesKey = `Edge (${cntEdgeType})`;
-      tree[edgeTypesKey] = tree['Edge'];
+
+      this.edgeKey = `Edge (${cntEdgeType})`;
+      tree[this.edgeKey] = tree['Edge'];
       delete tree['Edge'];
-      this._database.initialize(tree, this.maxLevel, edgeTypesKey);
+      this._database.initialize(tree);
     });
   }
 
@@ -179,22 +173,34 @@ export class TreeSelectComponent {
     for (let i = 0; i < typeArr.length; i++) {
       const attr = [];
       const currType = typeArr[i].Name;
-      const typeAttr = typeArr[i].Attributes;
+      if (isVertex) {
+        const hasStrId = (typeArr[i] as TigerGraphVertexType).PrimaryId.AttributeType.Name == 'STRING';
+        if (hasStrId) {
+          // push primary id as string attribute 
+          const attrName = (typeArr[i] as TigerGraphVertexType).PrimaryId.AttributeName;
+          attr.push(attrName);
+          this.vertexPrimaryIds[attrName] = true;
+        }
+      }
+
+      // only parse string attributes
+      const typeAttr = typeArr[i].Attributes.filter(x => x.AttributeType.Name == 'STRING');
       for (let j of typeAttr) {
         attr.push(j.AttributeName);
       }
-      if (typeAttr.length > 0) {
+      if (attr.length > 0) {
         if (isVertex) {
-          tree.Vertex[`${currType} (${typeAttr.length})`] = attr;
+          tree.Vertex[`${currType} (${attr.length})`] = attr;
         } else {
-          tree.Edge[`${currType} (${typeAttr.length})`] = attr;
+          tree.Edge[`${currType} (${attr.length})`] = attr;
         }
 
       } else {
         if (isVertex) {
           tree.Vertex[currType] = attr;
         } else {
-          tree.Edge[currType] = attr;
+          // pass edge types without attributes since edges don't have ID (instead they have source id, target id and type)
+          // tree.Edge[currType] = attr;
         }
       }
     }
@@ -312,82 +318,134 @@ export class TreeSelectComponent {
   }
 
   onSearch() {
-    this._database.filterByTxt(this.filterSchemaTxt, this.maxLevel);
+    this._database.filterByTxt(this.filterSchemaTxt);
     this.treeControl.expandAll();
     this.checklistSelection.clear();
   }
 
   searchOnDB() {
+    if (this.searchTxt.length < 1) {
+      return;
+    }
     const selected: TodoItemFlatNode[] = this.checklistSelection.selected;
     const graph = this._settings.appConf.tigerGraphDbConfig.graphName.getValue();
     let gsql = '';
     // search only for IDs in all Vertex types
     if (!selected || selected.length < 1) {
+      const orExp = this.getGSQL4MultiOrExp(this.vertexPrimaryIds, this.searchTxt);
       gsql =
         `INTERPRET QUERY () FOR GRAPH ${graph} {
-        results = SELECT x FROM :x where lower(x.Id) LIKE "%${this.searchTxt}%";
+        results = SELECT x FROM :x WHERE ${orExp};
         PRINT results;
         }`;
-    } else if (this.maxLevel == 1) { // search only for IDs in selected Vertex types
-      const vertexTypes = selected.filter(x => x.level == 1).map(x => x.item.split('(')[0].trim()).join('|');
-      gsql =
-        `INTERPRET QUERY () FOR GRAPH ${graph} {
-        results = SELECT x FROM (${vertexTypes}):x where lower(x.Id) LIKE "%${this.searchTxt}%";
-        PRINT results;
-        }`;
-    } else if (this.maxLevel == 2) {
-      const vertexQuery = {};
-      const edgeQuery = {};
-      const attributeItems = selected.filter(x => x.level == 2);
-      for (let i of attributeItems) {
-        const parent = this.getParentNode(i);
-        const grandParent = this.getParentNode(parent);
-        const typeName = parent.item.split('(')[0].trim();
-        if (grandParent.item.startsWith('Vertex')) {
-          if (!vertexQuery[typeName]) {
-            vertexQuery[typeName] = [];
-          }
-          vertexQuery[typeName].push(i.item);
-        } else {
-          if (!edgeQuery[typeName]) {
-            edgeQuery[typeName] = [];
-          }
-          edgeQuery[typeName].push(i.item);
-        }
-      }
-      const typeItems = selected.filter(x => x.level == 1);
-      for (let i of typeItems) {
-        const parent = this.getParentNode(i);
-        const typeName = i.item.split('(')[0].trim();
-        if (parent.item.startsWith('Vertex')) {
-          if (!vertexQuery[typeName]) {
-            vertexQuery[typeName] = [];
-          }
-        } else {
-          if (!edgeQuery[typeName]) {
-            edgeQuery[typeName] = [];
-          }
-        }
+    } else {
+      const { vertexTypes, vertexAttr, edgeTypes, edgeAttr, } = this.getQuery4Selected();
+      const vertexTypeSelector = `(${Object.keys(vertexTypes).join('|')})`;
+      const edgeTypeSelector = `(${Object.keys(edgeTypes).join('|')})`;
+      const vertexAttrOrExp = this.getGSQL4MultiOrExp(vertexAttr, this.searchTxt);
+      const edgeAttrOrExp = this.getGSQL4MultiOrExp(edgeAttr, this.searchTxt);
+      const hasVertex = vertexTypeSelector.length > 3;
+      const hasEdge = edgeTypeSelector.length > 3;
+
+      let printVertexStatement = ' nodes';
+      if (hasEdge && hasVertex) {
+        printVertexStatement = ', nodes';
+      } else if (!hasVertex) {
+        printVertexStatement = '';
       }
 
-      console.log(vertexQuery, edgeQuery);
-      const types = selected.filter(x => x.level == 1).map(x => x.item.split('(')[0].trim()).join('|');
       gsql =
         `INTERPRET QUERY () FOR GRAPH ${graph} {
-        results = SELECT x FROM (${types}):x where lower(x.Id) LIKE "%${this.searchTxt}%";
-        PRINT results;
+        ${hasEdge ? 'ListAccum<EDGE> @@edgeList;' : ''}
+    
+        ${hasVertex ? `nodes = SELECT x FROM ${vertexTypeSelector}:x WHERE ${vertexAttrOrExp};` : ''}
+        
+        ${hasEdge ? `srcNodes = SELECT s FROM :s -(${edgeTypeSelector}:x)- :t
+                 WHERE ${edgeAttrOrExp}
+                 ACCUM @@edgeList += x;` : ''}
+
+        ${hasEdge ? `tgtNodes = SELECT t FROM :s -(${edgeTypeSelector}:x)- :t
+                 WHERE ${edgeAttrOrExp};` : ''}
+        
+        PRINT ${hasEdge ? '@@edgeList, srcNodes, tgtNodes' : ''} ${printVertexStatement};
         }`;
     }
-
+    console.log(gsql);
     this._dbApi.runQuery(gsql, (x) => {
       if (!x || !(x.results)) {
         this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
         return;
       }
-      this._s.loadGraph({ nodes: x.results[0].results, edges: [] });
+      const r = x.results[0];
+      if (r['@@edgeList']) {
+        this._s.loadGraph({ nodes: r.tgtNodes.concat(r.srcNodes).concat(r.nodes), edges: r['@@edgeList'] });
+      } else {
+        this._s.loadGraph({ nodes: r.nodes, edges: [] });
+      }
+
       this._s.add2GraphHistory('run interpretted query');
     });
-    console.log(selected);
+  }
+
+  getGSQL4MultiOrExp(attribs: Str2Bool, txt: string): string {
+    if (!this.isCaseSense) {
+      txt = txt.toLowerCase();
+    }
+    const boolExpArr: string[] = [];
+    const IDs = Object.keys(attribs);
+    for (let i of IDs) {
+      if (!this.isCaseSense) {
+        boolExpArr.push(`LOWER(x.${i}) LIKE "%${txt}%"`);
+      } else {
+        boolExpArr.push(`x.${i} LIKE "%${txt}%"`);
+      }
+    }
+    return boolExpArr.join(' OR ');
+  }
+
+  getQuery4Selected(): { vertexTypes: Str2Bool, vertexAttr: Str2Bool, edgeTypes: Str2Bool, edgeAttr: Str2Bool } {
+    const selected: TodoItemFlatNode[] = this.checklistSelection.selected;
+
+    const vertexTypes: Str2Bool = {};
+    const vertexAttr: Str2Bool = {};
+    const edgeTypes: Str2Bool = {};
+    const edgeAttr: Str2Bool = {};
+
+    let attributeItems = selected.filter(x => x.level == 2);
+    for (let i of attributeItems) {
+      const parent = this.getParentNode(i);
+      const grandParent = this.getParentNode(parent);
+      const typeName = parent.item.split('(')[0].trim();
+      if (grandParent.item.startsWith('Vertex')) {
+        vertexTypes[typeName] = true;
+        vertexAttr[i.item] = true;
+      } else {
+        edgeTypes[typeName] = true;
+        edgeAttr[i.item] = true;
+      }
+    }
+    const typeItems = selected.filter(x => x.level == 1);
+    for (let i of typeItems) {
+      const parent = this.getParentNode(i);
+      const typeName = i.item.split('(')[0].trim();
+      if (parent.item.startsWith('Vertex')) {
+        vertexTypes[typeName] = true;
+        // add all attributes of a type
+        const attribs = this._database.originalTreeData[this.vertexKey][i.item]
+        for (const att of attribs) {
+          vertexAttr[att] = true;
+        }
+
+      } else {
+        edgeTypes[typeName] = true;
+        // add all attributes of a type
+        const attribs = this._database.originalTreeData[this.edgeKey][i.item]
+        for (const att of attribs) {
+          edgeAttr[att] = true;
+        }
+      }
+    }
+    return { vertexTypes, vertexAttr, edgeTypes, edgeAttr };
   }
 
   collapseTree() {
@@ -396,5 +454,12 @@ export class TreeSelectComponent {
 
   expandTree() {
     this.treeControl.expandAll();
+  }
+
+  copyTypeName(txt: string) {
+    txt = txt.split('(')[0].trim();
+    this._snackBar.open(`'${txt}' copied!`, 'OK', {
+      duration: 5000
+    });
   }
 }

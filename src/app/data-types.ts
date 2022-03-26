@@ -154,6 +154,15 @@ export enum DatabaseType {
   neo4j = 1
 }
 
+export interface Str2Bool {
+  [key: string]: boolean;
+}
+
+
+export interface Str2StrBool {
+  [key: string]: Str2Bool;
+}
+
 export interface DbClient {
 
   refreshToken: (cb) => void;
