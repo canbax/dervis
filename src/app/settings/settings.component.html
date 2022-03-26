@@ -2,44 +2,37 @@
   <mat-expansion-panel>
     <mat-expansion-panel-header>
       <mat-panel-title> Tiger Graph Database Connection </mat-panel-title>
-      <mat-panel-description>
-        Connect to a tiger graph REST API
-      </mat-panel-description>
     </mat-expansion-panel-header>
     <form>
-      <div class="d-flex">
-        <mat-form-field appearance="fill" class="w45">
+      <div>
+        <mat-form-field appearance="fill" class="w100">
           <mat-label>Database URL</mat-label>
           <input matInput [(ngModel)]="tigerGraphDbConf.url" name="url" />
         </mat-form-field>
         <br />
-        <mat-form-field appearance="fill" class="w45">
+        <mat-form-field appearance="fill" class="w100">
           <mat-label>Database secret</mat-label>
-          <input matInput [(ngModel)]="tigerGraphDbConf.secret" name="secret" />
+          <input
+            matInput
+            [(ngModel)]="tigerGraphDbConf.secret"
+            type="password"
+            name="secret"
+          />
         </mat-form-field>
       </div>
-      <div class="d-flex p5">
+      <div class="p1">
         <button
           mat-stroked-button
           class="w100"
           matTooltip="Database URL and secret will be used to get a token"
           (click)="refreshDbToken()"
         >
-          Generate New Token <mat-icon>sync</mat-icon>
+          Generate Token (valid till {{ tokenExpireDateStr }})
+          <mat-icon>sync</mat-icon>
         </button>
       </div>
-      <div class="d-flex">
-        <mat-form-field appearance="fill">
-          <mat-label>Token expire</mat-label>
-          <input
-            matInput
-            disabled
-            [(ngModel)]="tigerGraphDbConf.tokenExpire"
-            name="tokenExpire"
-            [title]="tokenExpireDateStr"
-          />
-        </mat-form-field>
-        <mat-form-field appearance="fill">
+      <div>
+        <mat-form-field appearance="fill" class="w100">
           <mat-label>Token</mat-label>
           <input
             matInput
@@ -49,7 +42,6 @@
           />
           <span matSuffix>
             <button
-              class="d-in"
               mat-icon-button
               [cdkCopyToClipboard]="tigerGraphDbConf.token"
               (click)="copy(tigerGraphDbConf.token)"
@@ -59,7 +51,7 @@
           </span>
         </mat-form-field>
       </div>
-      <div class="d-flex">
+      <div>
         <mat-form-field appearance="fill" class="w100">
           <mat-label>Graph Name</mat-label>
           <input
@@ -69,8 +61,8 @@
           />
         </mat-form-field>
       </div>
-      <div class="d-flex">
-        <mat-form-field appearance="fill">
+      <div>
+        <mat-form-field appearance="fill" class="w100">
           <mat-label>Database username</mat-label>
           <input
             matInput
@@ -78,7 +70,9 @@
             name="username"
           />
         </mat-form-field>
-        <mat-form-field appearance="fill">
+      </div>
+      <div>
+        <mat-form-field appearance="fill" class="w100">
           <mat-label>Database password</mat-label>
           <input
             matInput
@@ -103,22 +97,13 @@
         />
       </mat-form-field>
     </form>
-
-    <button
-      class="p5"
-      mat-fab
-      (click)="saveDbConfig()"
-      matTooltip="save"
-    >
+    <button class="p5" mat-fab (click)="saveDbConfig()" matTooltip="save">
       <mat-icon>save</mat-icon>
     </button>
   </mat-expansion-panel>
   <mat-expansion-panel>
     <mat-expansion-panel-header>
       <mat-panel-title> General </mat-panel-title>
-      <mat-panel-description>
-        Settings about visualization
-      </mat-panel-description>
     </mat-expansion-panel-header>
     <form class="w100">
       <!-- highlight style -->

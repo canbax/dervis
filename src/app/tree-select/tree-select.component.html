@@ -1,4 +1,4 @@
-<div class="m1">
+<div class="p1">
   <mat-form-field appearance="fill" class="w100">
     <mat-label>Search...</mat-label>
     <input
@@ -9,14 +9,14 @@
     />
   </mat-form-field>
 </div>
-<div class="m1">
-  <mat-checkbox class="m1" [(ngModel)]="isOnDB"> Is on Database?</mat-checkbox>
-  <mat-checkbox class="m1" [(ngModel)]="isCaseSense">
+<div class="p1">
+  <mat-checkbox class="p1" [(ngModel)]="isOnDB"> Is on Database?</mat-checkbox>
+  <mat-checkbox class="p1" [(ngModel)]="isCaseSense">
     Is case sensitive?
   </mat-checkbox>
 </div>
 
-<div class="m1">
+<div class="p1">
   <mat-expansion-panel
     (opened)="isDetailedSearchOpen = true"
     (closed)="isDetailedSearchOpen = false"
@@ -24,7 +24,7 @@
     <mat-expansion-panel-header>
       <mat-panel-title> Search on types and attributes </mat-panel-title>
     </mat-expansion-panel-header>
-    <div class="m1">
+    <div class="p1">
       <mat-form-field appearance="fill" class="w100">
         <mat-label>Filter types or attributes</mat-label>
         <input
@@ -107,7 +107,7 @@
   </mat-expansion-panel>
 </div>
 
-<div class="m1">
+<div class="p1">
   <button
     class="w100"
     [disabled]="searchTxt.length < 1"
