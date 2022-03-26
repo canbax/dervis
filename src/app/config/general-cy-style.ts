@@ -1,6 +1,14 @@
 export const GENERAL_CY_STYLE: any[] =
   [
     {
+      selector: "node",
+      style: {
+        "font-size": 8,
+        "text-valign": "bottom",
+        "text-wrap": "wrap"
+      }
+    },
+    {
       selector: "node.hover",
       style: {
         "background-opacity": 1,

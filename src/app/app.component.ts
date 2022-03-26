@@ -11,12 +11,19 @@ import { TreeSelectData } from './tree-select/tree-select.component';
 })
 export class AppComponent implements OnInit {
 
+  selectedRightTabIdx = 0;
   constructor(private _dbApi: TigerGraphApiClientService, private _s: SharedService) {
 
   }
 
   ngOnInit(): void {
     this._s.init();
+    this._s.elemSelectChanged.subscribe((x) => {
+      if (!x) {
+        return;
+      }
+      this.selectedRightTabIdx = 1;
+    });
   }
 
   loadSampleData() {

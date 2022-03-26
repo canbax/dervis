@@ -1,0 +1,16 @@
+<div *ngFor="let k of keys; let i = index" class="p1">
+  <b>{{ k }}:&nbsp;</b>
+  <span *ngIf="isLink(values[i]); else elseBlock">
+    <a href="{{ values[i] }}" target="_blank">{{ values[i] }}</a>
+  </span>
+  <ng-template #elseBlock> {{ values[i] }}</ng-template>
+
+  <button
+    class="copy-btn"
+    mat-icon-button
+    [cdkCopyToClipboard]="values[i]"
+    (click)="copy(values[i])"
+  >
+    <mat-icon class="f1">file_copy</mat-icon>
+  </button>
+</div>

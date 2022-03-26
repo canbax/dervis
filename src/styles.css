@@ -20,3 +20,7 @@ body {
 .w90 {
   width: 90%;
 }
+
+.f1 {
+  font-size: 1.25em !important;
+}

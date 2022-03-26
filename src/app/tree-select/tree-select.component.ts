@@ -335,8 +335,8 @@ export class TreeSelectComponent {
       const orExp = this.getGSQL4MultiOrExp(this.vertexPrimaryIds, this.searchTxt);
       gsql =
         `INTERPRET QUERY () FOR GRAPH ${graph} {
-        results = SELECT x FROM :x WHERE ${orExp};
-        PRINT results;
+        nodes = SELECT x FROM :x WHERE ${orExp};
+        PRINT nodes;
         }`;
     } else {
       const { vertexTypes, vertexAttr, edgeTypes, edgeAttr, } = this.getQuery4Selected();

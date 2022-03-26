@@ -621,7 +621,14 @@ export class SharedService {
           let n = e.data('collapsedEdges').length;
           return (3 + Math.log2(n)) + 'px';
         },
-      }).update();
+      })
+    this.cy.style().selector('node')
+      .style({
+        'label': (e) => {
+          return e.classes()[0] + '\n' + e.id().split('_')[1];
+        },
+      })
+      .update();
   }
 
   private endlessOpacityAnim() {

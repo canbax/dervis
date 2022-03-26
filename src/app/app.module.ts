@@ -29,13 +29,15 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatCardModule } from '@angular/material/card';
 
 import { SettingsComponent } from './settings/settings.component';
+import { ObjectPropertiesComponent } from './object-properties/object-properties.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     ErrorDialogComponent,
     TreeSelectComponent,
-    SettingsComponent
+    SettingsComponent,
+    ObjectPropertiesComponent
   ],
   imports: [
     MatSidenavModule,
