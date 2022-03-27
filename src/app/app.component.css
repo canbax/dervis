@@ -32,3 +32,15 @@
   flex: 1;
   overflow: auto;
 }
+
+.spinner-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-25%, -25%);
+  -webkit-transform: translate(-25%, -25%);
+  -moz-transform: translate(-25%, -25%);
+  -o-transform: translate(-25%, -25%);
+  -ms-transform: translate(-25%, -25%);
+  z-index: 1005;
+}

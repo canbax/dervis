@@ -18,6 +18,7 @@ export const APP_CONF = {
   ],
   currHighlightIdx: 0,
   isIgnoreCaseInText: false,
+  isGroupCrowdedNeigbors: true,
   currLayout: 'fcose',
   graphHistoryLimit: 25,
   nodeTypes: [],

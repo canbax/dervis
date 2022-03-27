@@ -12,6 +12,7 @@ import { TreeSelectData } from './tree-select/tree-select.component';
 export class AppComponent implements OnInit {
 
   selectedRightTabIdx = 0;
+  isLoading = true;
   constructor(private _dbApi: TigerGraphApiClientService, private _s: SharedService) {
 
   }
@@ -24,12 +25,18 @@ export class AppComponent implements OnInit {
       }
       this.selectedRightTabIdx = 1;
     });
+    this._s.isLoading.subscribe(x => { this.isLoading = x; });
   }
 
   loadSampleData() {
     this.clearData();
     this._s.isLoading.next(true);
-    this._dbApi.sampleData((x: any) => { this._s.loadGraph(x); this._s.isLoading.next(false); this._s.add2GraphHistory('Load sample data'); });
+    const fn = (x) => {
+      this._s.loadGraph(x);
+      this._s.isLoading.next(false);
+      this._s.add2GraphHistory('Load sample data');
+    };
+    this._dbApi.sampleData(fn);
   }
 
   clearData() {

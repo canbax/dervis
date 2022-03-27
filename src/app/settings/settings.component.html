@@ -176,6 +176,13 @@
           >Ignore case in text operations
         </mat-checkbox>
 
+        <mat-checkbox
+          [(ngModel)]="isGroupCrowdedNeigbors"
+          (change)="changeConfig('isGroupCrowdedNeigbors')"
+          name="is-group-crowded-neigbors"
+          >Is group crowded neighbors?
+        </mat-checkbox>
+
         <br />
         <mat-form-field appearance="fill">
           <mat-label>Layout algorithm</mat-label>

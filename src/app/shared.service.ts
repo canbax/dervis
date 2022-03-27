@@ -304,7 +304,11 @@ export class SharedService {
       return;
     }
     this.isLoading.next(true);
-    this._dbApi.getNeighborsOfNode((x) => { this.loadGraph(x); this.add2GraphHistory('get neighbors of node'); }, ele);
+    const fn = (x) => {
+      this.loadGraph(x);
+      this.add2GraphHistory('get neighbors of node');
+    };
+    this._dbApi.getNeighborsOfNode(fn, ele);
   }
 
   selectAllThisType(event) {
@@ -505,6 +509,14 @@ export class SharedService {
     this.isLoading.next(false);
     if (isAddedNew) {
       this.performLayout();
+    }
+  }
+
+  groupCrowdedNei() {
+    const nodes = this.cy.nodes().orphans();
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+
     }
   }
 

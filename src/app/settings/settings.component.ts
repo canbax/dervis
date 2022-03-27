@@ -19,6 +19,7 @@ export class SettingsComponent {
   currHighlightStyle: { wid: number, color: string, name: string };
   currHighlightIdx: number;
   isIgnoreCaseInText: boolean;
+  isGroupCrowdedNeigbors: boolean;
   layoutOptions: string[];
   currLayout: string;
   nodeTypes: string[] = [];

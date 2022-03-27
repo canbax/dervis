@@ -30,6 +30,9 @@
     </mat-toolbar>
     <div class="cy-container">
       <div id="cy"></div>
+      <div *ngIf="isLoading" class="spinner-container">
+        <mat-spinner [diameter]="100"></mat-spinner>
+      </div>
     </div>
   </mat-sidenav-content>
 </mat-sidenav-container>
