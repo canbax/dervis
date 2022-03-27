@@ -89,8 +89,9 @@ export class TigerGraphApiClientService implements DbClient {
       });
   }
 
-  getNeighborsOfNode(cb: (r: GraphResponse) => void, elem: { id: () => string; }) {
-    const id = elem.id().substr(2);
+  getNeighborsOfNode(cb: (r: GraphResponse) => void, elem: any) {
+    const id = elem.id().substring(2);
+    const vertexType = this.dataSchema.VertexTypes.find(x => x.Name == elem.classes()[0]);
 
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
     const gsql = `INTERPRET QUERY () FOR GRAPH ${conf.graphName} {   
@@ -99,7 +100,7 @@ export class TigerGraphApiClientService implements DbClient {
     
       results = SELECT t
                FROM seed:s -(:e)->:t
-               WHERE s.id == "${id}"
+               WHERE s.${vertexType.PrimaryId.AttributeName} == "${id}"
                ACCUM @@edgeList += e;
       
       PRINT  @@edgeList, results; 

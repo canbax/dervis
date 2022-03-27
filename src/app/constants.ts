@@ -266,7 +266,15 @@ export function makeElemDraggable(elem: HTMLElement, dragHandle: HTMLElement, on
 
 export function getCyStyleFromColorAndWid(color: string, wid: number): { nodeCss: any, edgeCss: any } {
   return {
-    nodeCss: { 'border-color': color, 'border-width': wid },
-    edgeCss: { 'line-color': color, 'target-arrow-color': color, 'width': wid }
+    nodeCss: {
+      "underlay-color": color,
+      "underlay-opacity": 0.5,
+      "underlay-padding": wid,
+    },
+    edgeCss: {
+      "underlay-color": color,
+      "underlay-opacity": 0.5,
+      "underlay-padding": wid,
+    }
   };
 }

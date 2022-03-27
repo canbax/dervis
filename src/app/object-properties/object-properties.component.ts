@@ -23,7 +23,10 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
   }
 
   isLink(txt: string) {
-    return txt.toLowerCase().startsWith('http:/');
+    if (typeof txt == 'string') {
+      return txt.toLowerCase().startsWith('http:/');
+    }
+    return false;
   }
 
   ngOnInit(): void {

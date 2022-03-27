@@ -5,7 +5,22 @@ export const GENERAL_CY_STYLE: any[] =
       style: {
         "font-size": 8,
         "text-valign": "bottom",
-        "text-wrap": "wrap"
+        "text-wrap": "wrap",
+        "text-outline-color": "#555555",
+        "text-outline-width": "2px",
+        "color": "#FFFFFF"
+      }
+    },
+    {
+      selector: "edge",
+      style: {
+        "font-size": 7,
+        "text-outline-color": "#555555",
+        "text-outline-width": "1px",
+        "text-rotation": "autorotate",
+        "color": "#FFFFFF",
+        "line-style": "solid",
+        "curve-style": "bezier"
       }
     },
     {
@@ -36,17 +51,17 @@ export const GENERAL_CY_STYLE: any[] =
     {
       selector: "node:selected",
       style: {
-        "overlay-color": "#BFBFBF",
-        "overlay-opacity": 0.5,
-        "overlay-padding": "6px",
+        "underlay-color": "#BFBFBF",
+        "underlay-opacity": 0.5,
+        "underlay-padding": "6px",
       }
     },
     {
       selector: "edge:selected",
       style: {
-        "overlay-color": "#BFBFBF",
-        "overlay-padding": "6px",
-        "overlay-opacity": 0.5,
+        "underlay-color": "#BFBFBF",
+        "underlay-padding": "6px",
+        "underlay-opacity": 0.5,
       }
     },
     {

@@ -5,7 +5,7 @@ import expandCollapse from 'cytoscape-expand-collapse';
 import contextMenus from 'cytoscape-context-menus';
 import viewUtilities from 'cytoscape-view-utilities';
 
-import { Layout, LAYOUT_ANIM_DUR, expandCollapseCuePosition, EXPAND_COLLAPSE_CUE_SIZE, debounce, MAX_HIGHLIGHT_CNT, deepCopy, COLLAPSED_EDGE_CLASS, COMPOUND_CLASS, COLLAPSED_NODE_CLASS, OBJ_INFO_UPDATE_DELAY, isPrimitiveType } from './constants';
+import { Layout, LAYOUT_ANIM_DUR, expandCollapseCuePosition, EXPAND_COLLAPSE_CUE_SIZE, debounce, MAX_HIGHLIGHT_CNT, deepCopy, COLLAPSED_EDGE_CLASS, COMPOUND_CLASS, COLLAPSED_NODE_CLASS, OBJ_INFO_UPDATE_DELAY, isPrimitiveType, getCyStyleFromColorAndWid } from './constants';
 import { GraphResponse, NodeResponse, InterprettedQueryResult, TableData, isNodeResponse, isEdgeResponse, EdgeResponse, GraphHistoryItem, TigerGraphDbConfig } from './data-types';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
@@ -100,12 +100,12 @@ export class SharedService {
       timeout = setTimeout(() => {
         const nodeAnim = {
           style: {
-            'padding': 5, 'font-size': '10px', 'z-index': 15
+            'z-index': 15
           }, duration: ANIM_DUR
         };
         const edgeAnim = {
           style: {
-            'width': 5, 'font-size': '10px', 'z-index': 15
+            'z-index': 15
           }, duration: ANIM_DUR
         };
         if (!isOn) {
@@ -212,16 +212,10 @@ export class SharedService {
       // List of initial menu items
       // A menu item must have either onClickFunction or submenu or both
       menuItems: [{
-        id: 'collapseAllNodes',
-        content: 'Collapse All Nodes',
+        id: 'removeHighlights',
+        content: 'Remove Highlights',
         coreAsWell: true,
-        onClickFunction: () => { this.collapseCompoundNodes(); }
-      },
-      {
-        id: 'collapseAllEdges',
-        content: 'Collapse All Edges',
-        coreAsWell: true,
-        onClickFunction: () => { this.collapseCompoundEdges(); }
+        onClickFunction: () => { this.viewUtils.removeHighlights(); }
       },
       {
         id: 'performLayout',
@@ -298,11 +292,8 @@ export class SharedService {
       let w = style.wid.getValue();
       let c = style.color.getValue();
 
-      r.push({
-        node: { 'border-color': c, 'border-width': w },
-        edge: { 'line-color': c, 'target-arrow-color': c, 'width': 4.5 }
-      });
-
+      const styles = getCyStyleFromColorAndWid(c, w);
+      r.push({ node: styles.nodeCss, edge: styles.edgeCss });
     }
     return r;
   }
@@ -612,7 +603,14 @@ export class SharedService {
   }
 
   addFnStyles() {
-    this.cy.style().selector('edge.' + COLLAPSED_EDGE_CLASS)
+    this.cy.style()
+      .selector('edge')
+      .style({
+        'label': (e) => {
+          return e.classes()[0];
+        },
+      })
+      .selector('edge.' + COLLAPSED_EDGE_CLASS)
       .style({
         'label': (e) => {
           return '(' + e.data('collapsedEdges').length + ')';
@@ -622,7 +620,7 @@ export class SharedService {
           return (3 + Math.log2(n)) + 'px';
         },
       })
-    this.cy.style().selector('node')
+      .selector('node')
       .style({
         'label': (e) => {
           return e.classes()[0] + '\n' + e.id().split('_')[1];
