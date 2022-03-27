@@ -11,6 +11,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 })
 export class ObjectPropertiesComponent implements OnInit, OnDestroy {
 
+  tableHeader = '';
+  isShowTable = false;
   keys: string[];
   values: any[];
   subscription: Subscription;
@@ -40,8 +42,42 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
     if (!d) {
       return;
     }
+    this.isShowTable = false;
+    this.prepareTableIfNeeded();
     this.keys = Object.keys(d);
     this.values = Object.values(d);
+  }
+
+  // if multiple objects from the same type is selected, show a table
+  prepareTableIfNeeded() {
+    this.isShowTable = true;
+    const elems = this._s.cy.$(':selected');
+    const classes = {};
+    for (let i = 0; i < elems.length; i++) {
+      classes[elems[i].classes()[0]] = true;
+    }
+    const data = [];
+    const cNames = Object.keys(classes);
+    if (elems.length < 2 || cNames.length > 1) {
+      this.tableHeader = '';
+      this.isShowTable = false;
+      return;
+    }
+    this.tableHeader = cNames.join();
+    const colsDict = {};
+    for (let i = 0; i < elems.length; i++) {
+      const d = elems[i].data();
+      data.push(d);
+      const keys = Object.keys(d);
+      for (let j = 0; j < keys.length; j++) {
+        colsDict[keys[j]] = true;
+      }
+    }
+    const cols = Object.keys(colsDict);
+
+    setTimeout(() => {
+      this._s.tableData.next({ columns: cols, data: data });
+    }, 0);
   }
 
   copy(txt: string) {

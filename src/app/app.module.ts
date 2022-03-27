@@ -17,6 +17,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
@@ -30,6 +33,7 @@ import { MatCardModule } from '@angular/material/card';
 
 import { SettingsComponent } from './settings/settings.component';
 import { ObjectPropertiesComponent } from './object-properties/object-properties.component';
+import { TableViewComponent } from './table-view/table-view.component';
 
 @NgModule({
   declarations: [
@@ -37,7 +41,8 @@ import { ObjectPropertiesComponent } from './object-properties/object-properties
     ErrorDialogComponent,
     TreeSelectComponent,
     SettingsComponent,
-    ObjectPropertiesComponent
+    ObjectPropertiesComponent,
+    TableViewComponent
   ],
   imports: [
     MatSidenavModule,
@@ -47,6 +52,9 @@ import { ObjectPropertiesComponent } from './object-properties/object-properties
     ReactiveFormsModule,
     MatButtonModule,
     MatTabsModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
     MatIconModule,
     MatMenuModule,
     ClipboardModule,
