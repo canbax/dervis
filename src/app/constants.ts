@@ -1,5 +1,11 @@
 export const OBJ_INFO_UPDATE_DELAY = 200;
 
+export const EXPAND_COLLAPSE_FAST_OPT = {
+  layoutBy: null,
+  fisheye: false,
+  animate: false,
+};
+
 export const LAYOUT_ANIM_DUR = 500;
 
 export const Layout = {

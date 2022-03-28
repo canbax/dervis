@@ -5,7 +5,7 @@ import expandCollapse from 'cytoscape-expand-collapse';
 import contextMenus from 'cytoscape-context-menus';
 import viewUtilities from 'cytoscape-view-utilities';
 
-import { Layout, LAYOUT_ANIM_DUR, expandCollapseCuePosition, EXPAND_COLLAPSE_CUE_SIZE, debounce, MAX_HIGHLIGHT_CNT, deepCopy, COLLAPSED_EDGE_CLASS, COMPOUND_CLASS, COLLAPSED_NODE_CLASS, OBJ_INFO_UPDATE_DELAY, isPrimitiveType, getCyStyleFromColorAndWid } from './constants';
+import { Layout, LAYOUT_ANIM_DUR, expandCollapseCuePosition, EXPAND_COLLAPSE_CUE_SIZE, debounce, MAX_HIGHLIGHT_CNT, deepCopy, COLLAPSED_EDGE_CLASS, COMPOUND_CLASS, COLLAPSED_NODE_CLASS, OBJ_INFO_UPDATE_DELAY, isPrimitiveType, getCyStyleFromColorAndWid, EXPAND_COLLAPSE_FAST_OPT } from './constants';
 import { GraphResponse, NodeResponse, InterprettedQueryResult, TableData, isNodeResponse, isEdgeResponse, EdgeResponse, GraphHistoryItem, TigerGraphDbConfig } from './data-types';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
@@ -31,6 +31,8 @@ export class SharedService {
   elems2highlight = null;
   graphHistory: GraphHistoryItem[] = [];
   addNewGraphHistoryItem = new BehaviorSubject<boolean>(false);
+  readonly CROWDED_NEI_LIMIT = 5;
+  metaEdge2edge = {};
 
   constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService) {
     let isGraphEmpty = () => { return this.cy.elements().not(':hidden, :transparent').length > 0 };
@@ -513,11 +515,79 @@ export class SharedService {
   }
 
   groupCrowdedNei() {
-    const nodes = this.cy.nodes().orphans();
-    for (let i = 0; i < nodes.length; i++) {
-      const n = nodes[i];
-
+    const node2node = {}; // src id to edge type to tgt array
+    const edges = this.cy.edges(':visible');
+    for (let i = 0; i < edges.length; i++) {
+      const src = edges[i].source().id();
+      const tgt = edges[i].target().id();
+      // skip loops
+      if (src == tgt) {
+        continue;
+      }
+      // skip those who have parents
+      if (this.cy.$id(src).parent().length > 0 || this.cy.$id(tgt).parent().length > 0) {
+        continue;
+      }
+      if (!node2node[src]) {
+        node2node[src] = {};
+      }
+      const edgeType = edges[i].classes()[0];
+      if (!node2node[src][edgeType]) {
+        node2node[src][edgeType] = [];
+      }
+      node2node[src][edgeType].push(tgt);
     }
+
+    for (let src in node2node) {
+      for (let edgeType in node2node[src]) {
+        if (node2node[src][edgeType].length < this.CROWDED_NEI_LIMIT) {
+          continue;
+        }
+        const parentId = new Date().getTime();
+        this.addParentNode(parentId); // adds a 'c' to the ID
+        const targets = this.cy.collection();
+        for (let i = 0; i < node2node[src][edgeType].length; i++) {
+          let tgt = node2node[src][edgeType][i];
+          const target = this.cy.$id(tgt);
+          targets.merge(target)
+          target.move({ parent: 'c' + parentId });
+        }
+        const metaEdge = this.cy.add({
+          data: {
+            source: src,
+            target: 'c' + parentId,
+          },
+          classes: edgeType + ' MetaEdge',
+        });
+        const edges2remove = this.cy.$id(src).edgesTo(targets).remove();
+        this.metaEdge2edge[metaEdge.id()] = edges2remove;
+      }
+    }
+    this.performLayout();
+  }
+
+  removeCrowdedGroups() {
+    const groups = this.cy.$('.' + COMPOUND_CLASS);
+    this.expandCollapseApi.expand(groups, EXPAND_COLLAPSE_FAST_OPT);
+
+    // move to grandparent since parent will be deleted
+    for (let i = 0; i < groups.length; i++) {
+      const children: any = groups[i].children();
+      const grandParent: any = groups[i].parent().id()
+        ? groups[i].parent().id()
+        : null;
+      children.move({ parent: grandParent });
+    }
+
+    for (let k in this.metaEdge2edge) {
+      this.metaEdge2edge[k].restore();
+      this.cy.$id(k).remove();
+    }
+
+    if (groups) {
+      groups.remove();
+    }
+    this.performLayout();
   }
 
   loadGraph4InstalledQuery(x) {

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { COMPOUND_CLASS } from './constants';
 import { SchemaOutput } from './data-types';
 import { SharedService } from './shared.service';
 import { TigerGraphApiClientService } from './tiger-graph-api.service';
@@ -41,6 +42,14 @@ export class AppComponent implements OnInit {
 
   clearData() {
     this._s.cy.remove(this._s.cy.$());
+  }
+
+  summarizeNeig() {
+    this._s.groupCrowdedNei();
+  }
+
+  clearContainers() {
+    this._s.removeCrowdedGroups();
   }
 
 }

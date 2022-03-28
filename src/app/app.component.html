@@ -18,6 +18,17 @@
         <button (click)="loadSampleData()" mat-menu-item>Sample data</button>
         <button (click)="clearData()" mat-menu-item>Clear data</button>
       </mat-menu>
+      <button mat-button [matMenuTriggerFor]="view">
+        View <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #view="matMenu">
+        <button (click)="summarizeNeig()" mat-menu-item>
+          Summarize with containers
+        </button>
+        <button (click)="clearContainers()" mat-menu-item>
+          Clear containers
+        </button>
+      </mat-menu>
 
       <span class="spacer"></span>
       <button
