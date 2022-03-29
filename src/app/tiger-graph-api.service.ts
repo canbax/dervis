@@ -75,7 +75,7 @@ export class TigerGraphApiClientService implements DbClient {
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
     const gsql = `INTERPRET QUERY () FOR GRAPH ${conf.graphName} {   
       start =   {ANY};
-      results = SELECT s FROM start:s -(:e)-> :t LIMIT 10;
+      results = SELECT s FROM start:s -(:e)- :t LIMIT 10;
       PRINT results;
     }`;
 
@@ -99,7 +99,7 @@ export class TigerGraphApiClientService implements DbClient {
       seed = {ANY};
     
       results = SELECT t
-               FROM seed:s -(:e)->:t
+               FROM seed:s -(:e)-:t
                WHERE s.${vertexType.PrimaryId.AttributeName} == "${id}"
                ACCUM @@edgeList += e;
       

@@ -29,6 +29,15 @@
           Clear containers
         </button>
       </mat-menu>
+      <button mat-button [matMenuTriggerFor]="history">
+        History <mat-icon>arrow_drop_down</mat-icon>
+      </button>
+      <mat-menu #history="matMenu">
+        <button (click)="goBackInGraphHistory()" mat-menu-item>Back</button>
+        <button (click)="goForwardInGraphHistory()" mat-menu-item>
+          Forward
+        </button>
+      </mat-menu>
 
       <span class="spacer"></span>
       <button

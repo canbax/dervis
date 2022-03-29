@@ -6,7 +6,7 @@ import contextMenus from 'cytoscape-context-menus';
 import viewUtilities from 'cytoscape-view-utilities';
 
 import { Layout, LAYOUT_ANIM_DUR, expandCollapseCuePosition, EXPAND_COLLAPSE_CUE_SIZE, debounce, MAX_HIGHLIGHT_CNT, deepCopy, COLLAPSED_EDGE_CLASS, COMPOUND_CLASS, COLLAPSED_NODE_CLASS, OBJ_INFO_UPDATE_DELAY, isPrimitiveType, getCyStyleFromColorAndWid, EXPAND_COLLAPSE_FAST_OPT } from './constants';
-import { GraphResponse, NodeResponse, InterprettedQueryResult, TableData, isNodeResponse, isEdgeResponse, EdgeResponse, GraphHistoryItem, TigerGraphDbConfig } from './data-types';
+import { GraphResponse, NodeResponse, InterprettedQueryResult, TableData, isNodeResponse, isEdgeResponse, EdgeResponse, GraphHistoryItem } from './data-types';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
@@ -33,10 +33,11 @@ export class SharedService {
   addNewGraphHistoryItem = new BehaviorSubject<boolean>(false);
   readonly CROWDED_NEI_LIMIT = 5;
   metaEdge2edge = {};
+  currentHistoryIdx = 0;
 
   constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService) {
     let isGraphEmpty = () => { return this.cy.elements().not(':hidden, :transparent').length > 0 };
-    this.performLayout = debounce(this.runLayout, 2 * LAYOUT_ANIM_DUR, true, isGraphEmpty);
+    this.performLayout = debounce(this.runLayout, LAYOUT_ANIM_DUR, true, isGraphEmpty);
 
   }
 
@@ -67,7 +68,7 @@ export class SharedService {
     this.cy.on('add remove', fn2);
     const fn3 = debounce((e) => { this.elemHoverChanged.next(e) }, OBJ_INFO_UPDATE_DELAY);
     this.cy.on('mouseover mouseout', 'node, edge', fn3);
-    this.cy.on('mouseover mouseout', 'node, edge', this.magnifyOnHover().bind(this));
+    // this.cy.on('mouseover mouseout', 'node, edge', this.magnifyOnHover().bind(this));
 
     this.bindComponentSelector();
     this.addFnStyles();
@@ -564,6 +565,7 @@ export class SharedService {
       }
     }
     this.performLayout();
+    this.add2GraphHistory('Summarize with containers');
   }
 
   removeCrowdedGroups() {
@@ -680,8 +682,30 @@ export class SharedService {
         json: elements
       };
       this.graphHistory.push(g);
+      this.currentHistoryIdx = this.graphHistory.length - 1;
       this.addNewGraphHistoryItem.next(true);
-    }, 100);
+    }, LAYOUT_ANIM_DUR);
+  }
+
+  goBackInGraphHistory() {
+    this.currentHistoryIdx--;
+    if (this.currentHistoryIdx < 0) {
+      this.currentHistoryIdx = 0;
+    }
+    this.loadCurrentIdxFromGraphHistory();
+  }
+
+  goForwardInGraphHistory() {
+    this.currentHistoryIdx++;
+    if (this.currentHistoryIdx > this.graphHistory.length - 1) {
+      this.currentHistoryIdx = this.graphHistory.length - 1;
+    }
+    this.loadCurrentIdxFromGraphHistory();
+  }
+
+  loadCurrentIdxFromGraphHistory() {
+    let g = this.graphHistory[this.currentHistoryIdx];
+    this.cy.json({ elements: g.json });
   }
 
   addFnStyles() {
@@ -708,6 +732,8 @@ export class SharedService {
           return e.classes()[0] + '\n' + e.id().split('_')[1];
         },
       })
+      .selector('node.' + COMPOUND_CLASS)
+      .style({ 'label': '', })
       .update();
   }
 

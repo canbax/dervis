@@ -52,4 +52,12 @@ export class AppComponent implements OnInit {
     this._s.removeCrowdedGroups();
   }
 
+  goBackInGraphHistory() {
+    this._s.goBackInGraphHistory();
+  }
+
+  goForwardInGraphHistory() {
+    this._s.goForwardInGraphHistory();
+  }
+
 }
