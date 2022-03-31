@@ -66,7 +66,14 @@ export class SharedService {
     this.cy.on('select unselect', fn);
     const fn2 = debounce(() => { this.graphChanged.next(true) }, OBJ_INFO_UPDATE_DELAY);
     this.cy.on('add remove', fn2);
-    const fn3 = debounce((e) => { this.elemHoverChanged.next(e) }, OBJ_INFO_UPDATE_DELAY);
+    const fn3 = debounce((e) => {
+      this.elemHoverChanged.next(e);
+      const t = e.target;
+      t.removeClass('hovered');
+      if (e.type == 'mouseover') {
+        t.addClass('hovered');
+      }
+    }, OBJ_INFO_UPDATE_DELAY);
     this.cy.on('mouseover mouseout', 'node, edge', fn3);
     // this.cy.on('mouseover mouseout', 'node, edge', this.magnifyOnHover().bind(this));
 

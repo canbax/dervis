@@ -89,5 +89,11 @@ export const GENERAL_CY_STYLE: any[] =
         "text-rotation": "autorotate"
       }
     },
+    {
+      selector: "node.hovered, edge.hovered",
+      style: {
+        "z-index": 15
+      }
+    }
   ];
 
