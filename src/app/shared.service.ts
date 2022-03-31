@@ -516,7 +516,8 @@ export class SharedService {
   }
 
   groupCrowdedNei() {
-    const node2node = {}; // src id to edge type to tgt array
+    const src2tgt = {}; // src to edge type to tgt array
+    const tgt2src = {}; // tgt to edge type to src array
     const edges = this.cy.edges(':visible');
     for (let i = 0; i < edges.length; i++) {
       const src = edges[i].source().id();
@@ -529,16 +530,30 @@ export class SharedService {
       if (this.cy.$id(src).parent().length > 0 || this.cy.$id(tgt).parent().length > 0) {
         continue;
       }
-      if (!node2node[src]) {
-        node2node[src] = {};
+      if (!src2tgt[src]) {
+        src2tgt[src] = {};
+      }
+      if (!tgt2src[tgt]) {
+        tgt2src[tgt] = {};
       }
       const edgeType = edges[i].classes()[0];
-      if (!node2node[src][edgeType]) {
-        node2node[src][edgeType] = [];
+      if (!src2tgt[src][edgeType]) {
+        src2tgt[src][edgeType] = [];
       }
-      node2node[src][edgeType].push(tgt);
+      if (!tgt2src[tgt][edgeType]) {
+        tgt2src[tgt][edgeType] = [];
+      }
+      src2tgt[src][edgeType].push(tgt);
+      tgt2src[tgt][edgeType].push(src);
     }
+    this.addParentAndMetaEdge4Edges(src2tgt);
+    this.addParentAndMetaEdge4Edges(tgt2src);
 
+    this.performLayout();
+    this.add2GraphHistory('Summarize with containers');
+  }
+
+  private addParentAndMetaEdge4Edges(node2node, isSrc = true) {
     for (let src in node2node) {
       for (let edgeType in node2node[src]) {
         if (node2node[src][edgeType].length < this.CROWDED_NEI_LIMIT) {
@@ -553,19 +568,29 @@ export class SharedService {
           targets.merge(target)
           target.move({ parent: 'c' + parentId });
         }
-        const metaEdge = this.cy.add({
-          data: {
-            source: src,
-            target: 'c' + parentId,
-          },
-          classes: edgeType + ' MetaEdge',
-        });
-        const edges2remove = this.cy.$id(src).edgesTo(targets).remove();
+        let metaEdge = null;
+        if (isSrc) {
+          metaEdge = this.cy.add({
+            data: {
+              source: src,
+              target: 'c' + parentId,
+            },
+            classes: edgeType + ' MetaEdge',
+          });
+        } else {
+          metaEdge = this.cy.add({
+            data: {
+              source: 'c' + parentId,
+              target: src,
+            },
+            classes: edgeType + ' MetaEdge',
+          });
+        }
+
+        let edges2remove = this.cy.$id(src).edgesWith(targets).remove();
         this.metaEdge2edge[metaEdge.id()] = edges2remove;
       }
     }
-    this.performLayout();
-    this.add2GraphHistory('Summarize with containers');
   }
 
   removeCrowdedGroups() {
