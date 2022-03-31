@@ -1,6 +1,6 @@
 <mat-sidenav-container class="container">
   <mat-sidenav #sidenav mode="side" opened position="end" class="sidenav">
-    <mat-tab-group class="side-bar" [selectedIndex]="selectedRightTabIdx">
+    <mat-tab-group class="side-bar" [(selectedIndex)]="selectedRightTabIdx">
       <mat-tab label="Search"> <app-tree-select></app-tree-select> </mat-tab>
       <mat-tab label="Object">
         <app-object-properties></app-object-properties>
