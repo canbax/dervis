@@ -22,6 +22,8 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
@@ -35,6 +37,7 @@ import { MatCardModule } from '@angular/material/card';
 import { SettingsComponent } from './settings/settings.component';
 import { ObjectPropertiesComponent } from './object-properties/object-properties.component';
 import { TableViewComponent } from './table-view/table-view.component';
+import { DbQueryComponent } from './db-query/db-query.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +46,8 @@ import { TableViewComponent } from './table-view/table-view.component';
     TreeSelectComponent,
     SettingsComponent,
     ObjectPropertiesComponent,
-    TableViewComponent
+    TableViewComponent,
+    DbQueryComponent,
   ],
   imports: [
     MatSidenavModule,
@@ -53,6 +57,8 @@ import { TableViewComponent } from './table-view/table-view.component';
     ReactiveFormsModule,
     MatButtonModule,
     MatTabsModule,
+    MatDividerModule,
+    MatChipsModule,
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,

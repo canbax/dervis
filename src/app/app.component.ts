@@ -1,9 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { COMPOUND_CLASS } from './constants';
-import { SchemaOutput } from './data-types';
 import { SharedService } from './shared.service';
 import { TigerGraphApiClientService } from './tiger-graph-api.service';
-import { TreeSelectData } from './tree-select/tree-select.component';
 
 @Component({
   selector: 'app-root',
