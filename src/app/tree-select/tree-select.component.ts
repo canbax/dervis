@@ -3,7 +3,7 @@ import { SelectionModel } from '@angular/cdk/collections';
 import { FlatTreeControl } from '@angular/cdk/tree';
 import { MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { BehaviorSubject, filter } from 'rxjs';
-import { debounce, deepCopy } from '../constants';
+import { debounce, deepCopy, obj2str } from '../constants';
 import { TigerGraphApiClientService } from '../tiger-graph-api.service';
 import { SchemaOutput, TigerGraphEdgeType, TigerGraphVertexType, Str2Bool, Str2StrBool } from '../data-types';
 import { SharedService } from '../shared.service';
@@ -43,7 +43,6 @@ export class TreeSelectData {
   }
 
   constructor() { }
-
 
   /** Should only be called once!
    * @param  {any} treeData
@@ -323,10 +322,32 @@ export class TreeSelectComponent {
     this.checklistSelection.clear();
   }
 
-  searchOnDB() {
+  search4text() {
     if (this.searchTxt.length < 1) {
       return;
     }
+    if (this.isOnDB) {
+      this.searchOnDB();
+    } else {
+      this.searchOnClient();
+    }
+  }
+
+  searchOnClient() {
+    const elems = this._s.cy.$();
+    for (let i = 0; i < elems.length; i++) {
+      const s = obj2str(elems[i].data());
+      if (this._settings.appConf.isIgnoreCaseInText.getValue()) {
+        if (s.toLowerCase().includes(this.searchTxt.toLowerCase())) {
+          this._s.viewUtils.highlight(elems[i], this._settings.appConf.currHighlightIdx.getValue());
+        }
+      } else if (s.includes(this.searchTxt)) {
+        this._s.viewUtils.highlight(elems[i], this._settings.appConf.currHighlightIdx.getValue());
+      }
+    }
+  }
+
+  searchOnDB() {
     const selected: TodoItemFlatNode[] = this.checklistSelection.selected;
     const graph = this._settings.appConf.tigerGraphDbConfig.graphName.getValue();
     let gsql = '';
