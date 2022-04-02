@@ -21,7 +21,7 @@ export class AppComponent implements OnInit {
       if (!x) {
         return;
       }
-      this.selectedRightTabIdx = 1;
+      this.selectedRightTabIdx = 2;
     });
     this._s.isLoading.subscribe(x => { this.isLoading = x; });
   }

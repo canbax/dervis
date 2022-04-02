@@ -391,16 +391,25 @@ export class TreeSelectComponent {
         PRINT ${hasEdge ? '@@edgeList, srcNodes, tgtNodes' : ''} ${printVertexStatement};
         }`;
     }
-    console.log(gsql);
     this._dbApi.runQuery(gsql, (x) => {
       if (!x || !(x.results)) {
-        this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
+        this._snackBar.open('Empty response from query', 'close');
         return;
       }
       const r = x.results[0];
+      const edges = r['@@edgeList'];
       if (r['@@edgeList']) {
-        this._s.loadGraph({ nodes: r.tgtNodes.concat(r.srcNodes).concat(r.nodes), edges: r['@@edgeList'] });
+        const nodes = r.tgtNodes.concat(r.srcNodes).concat(r.nodes);
+        if (nodes.length < 1 && edges.length < 1) {
+          this._snackBar.open('Empty response from query', 'close');
+          return;
+        }
+        this._s.loadGraph({ nodes, edges });
       } else {
+        if (r.nodes.length < 1) {
+          this._snackBar.open('Empty response from query', 'close');
+          return;
+        }
         this._s.loadGraph({ nodes: r.nodes, edges: [] });
       }
 
