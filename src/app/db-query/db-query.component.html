@@ -3,7 +3,7 @@
     <mat-expansion-panel-header>
       <mat-panel-title> Run Interpretted GSQL </mat-panel-title>
     </mat-expansion-panel-header>
-    <div class="center-txt">
+    <div class="center-txt p1">
       <mat-chip-list aria-label="database queries">
         <mat-chip
           (click)="loadQuery(q)"
@@ -70,7 +70,7 @@
           Run <b>"{{ currInstalledQuery.name }}"</b>
         </button>
         <mat-divider
-          class="p5"
+          class="p1"
           *ngIf="
             rawInstalledQueryResponse && rawInstalledQueryResponse.length > 0
           "
