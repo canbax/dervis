@@ -12,6 +12,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class ObjectPropertiesComponent implements OnInit, OnDestroy {
 
   tableHeader = '';
+  objType = '';
   isShowTable = false;
   keys: string[];
   values: any[];
@@ -44,6 +45,7 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
     }
     this.isShowTable = false;
     this.prepareTableIfNeeded();
+    this.objType = this._s.cy.$(':selected').classes()[0];
     this.keys = Object.keys(d);
     this.values = Object.values(d);
   }
