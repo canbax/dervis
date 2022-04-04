@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { SharedService } from './shared.service';
 import { TigerGraphApiClientService } from './tiger-graph-api.service';
 
@@ -55,6 +55,12 @@ export class AppComponent implements OnInit {
 
   goForwardInGraphHistory() {
     this._s.goForwardInGraphHistory();
+  }
+
+  @HostListener('document:keydown.delete', ['$event'])
+  deleteSelected() {
+    this._s.deleteSelected();
+    this._s.add2GraphHistory('selected deleted');
   }
 
 }

@@ -17,6 +17,7 @@
       </button>
       <mat-menu #data="matMenu">
         <button (click)="loadSampleData()" mat-menu-item>Sample data</button>
+        <button (click)="deleteSelected()" mat-menu-item>Delete Selected</button>
         <button (click)="clearData()" mat-menu-item>Clear data</button>
       </mat-menu>
       <button mat-button [matMenuTriggerFor]="view">
