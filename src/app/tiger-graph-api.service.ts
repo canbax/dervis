@@ -16,6 +16,7 @@ export class TigerGraphApiClientService implements DbClient {
     EdgeTypes: TigerGraphEdgeType[],
     VertexTypes: TigerGraphVertexType[],
   }
+  onErrFn = null;
   constructor(private _http: HttpClient, private _c: SettingsService, public dialog: MatDialog, private _snackBar: MatSnackBar) {
     this._c.appConf.tigerGraphDbConfig.proxyUrl.subscribe((x: string) => {
       this.url = x;
@@ -24,6 +25,9 @@ export class TigerGraphApiClientService implements DbClient {
 
   private errFn = (err: { message: string; }) => {
     this._snackBar.open('Error in http request: ' + err.message, 'close');
+    if (this.onErrFn && typeof this.onErrFn == "function") {
+      this.onErrFn();
+    }
   }
 
   private simpleRequest() {

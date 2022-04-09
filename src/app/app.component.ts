@@ -17,12 +17,14 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
     this._s.init();
-    this._s.elemSelectChanged.subscribe((x) => {
+    const fn = (x) => {
       if (!x) {
         return;
       }
       this.selectedRightTabIdx = 2;
-    });
+    };
+    this._s.elemSelectChanged.subscribe(fn);
+    this._s.showTableChanged.subscribe(fn);
     this._s.isLoading.subscribe(x => { this.isLoading = x; });
   }
 

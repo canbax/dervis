@@ -17,12 +17,14 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
   keys: string[];
   values: any[];
   subscription: Subscription;
+  subscription2: Subscription;
 
   constructor(private _s: SharedService, private _snackBar: MatSnackBar) {
   }
 
   ngOnDestroy(): void {
     this.subscription.unsubscribe();
+    this.subscription2.unsubscribe();
   }
 
   isLink(txt: string) {
@@ -35,6 +37,8 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const fn = debounce(this.showObjProps, OBJ_INFO_UPDATE_DELAY).bind(this)
     this.subscription = this._s.elemSelectChanged.subscribe(fn);
+    this.subscription2 = this._s.showTableChanged.subscribe(fn);
+
     this.showObjProps();
   }
 
@@ -48,6 +52,10 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
     this.objType = this._s.cy.$(':selected').classes()[0];
     this.keys = Object.keys(d);
     this.values = Object.values(d);
+  }
+
+  showDataInTable() {
+    this.isShowTable = true;
   }
 
   // if multiple objects from the same type is selected, show a table
@@ -72,7 +80,9 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
       data.push(d);
       const keys = Object.keys(d);
       for (let j = 0; j < keys.length; j++) {
-        colsDict[keys[j]] = true;
+        if (this._s.showCertainPropsInTable && this._s.showCertainPropsInTable[keys[j]]) {
+          colsDict[keys[j]] = true;
+        }
       }
     }
     const cols = Object.keys(colsDict);

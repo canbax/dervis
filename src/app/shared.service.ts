@@ -25,6 +25,7 @@ export class SharedService {
   viewUtils: any;
   isLoading: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   elemSelectChanged: Subject<boolean> = new Subject();
+  showTableChanged: Subject<boolean> = new Subject();
   graphChanged: Subject<boolean> = new Subject();
   elemHoverChanged: Subject<any> = new Subject();
   tableData: Subject<TableData> = new Subject();
@@ -34,11 +35,12 @@ export class SharedService {
   readonly CROWDED_NEI_LIMIT = 5;
   metaEdge2edge = {};
   currentHistoryIdx = 0;
+  showCertainPropsInTable: any = false;
 
   constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService) {
     let isGraphEmpty = () => { return this.cy.elements().not(':hidden, :transparent').length > 0 };
     this.performLayout = debounce(this.runLayout, LAYOUT_ANIM_DUR, true, isGraphEmpty);
-
+    this._dbApi.onErrFn = () => { this.isLoading.next(false) };
   }
 
   init() {
@@ -280,7 +282,13 @@ export class SharedService {
         content: 'Get Neighbors',
         selector: 'node',
         onClickFunction: this.getNeighbors.bind(this)
-      }
+      },
+      {
+        id: 'inchi4visible',
+        content: 'Get inchi similarity',
+        selector: 'node.Compound',
+        onClickFunction: this.getInchiSimilarity2Existing.bind(this)
+      },
       ],
       // css classes that menu items will have
       menuItemClasses: ['mat-menu-item', 'ctx-menu-i'],
@@ -306,6 +314,51 @@ export class SharedService {
       r.push({ node: styles.nodeCss, edge: styles.edgeCss });
     }
     return r;
+  }
+
+  private getInchiSimilarity2Existing(e) {
+    const ele = e.target || e.cyTarget;
+    if (!ele) {
+      return;
+    }
+    this.isLoading.next(true);
+    const fn = (x) => {
+      this.isLoading.next(false);
+      const distArr = x.nodes[0]['@@distances'];
+      let elems = this.cy.collection();
+      for (let i = 0; i < distArr.length; i++) {
+        const elem = this.cy.$id('n_' + distArr[i].v);
+        elem.data('inchi_similarity', distArr[i].score);
+        elems = elems.union(elem);
+      }
+      elems.select();
+      this.showCertainPropsInTable = { id: true, inchi_similarity: true };
+      setTimeout(() => {
+        this.showCertainPropsInTable = false;
+      }, 1000);
+    };
+    const toDbId = (x: string) => { return x.split('_')[1]; };
+    const compoundIds = this.cy.nodes('.Compound').not('#' + ele.id()).map((x) => { return { l: toDbId(x.id()) } });
+    const params = [{ topN: 100 }, { v: toDbId(ele.id()) }, ...compoundIds];
+    this._dbApi.runStoredProcedure(fn, 'inchiSimilarity', params);
+  }
+
+  private getInchiSimilarity2All(e) {
+    const ele = e.target || e.cyTarget;
+    if (!ele) {
+      return;
+    }
+    this.isLoading.next(true);
+    const fn = (x) => {
+      this.isLoading.next(false);
+      const distArr = x.nodes[0]['@@distances'];
+      setTimeout(() => {
+        this.tableData.next({ columns: ["id", "score"], data: distArr });
+      }, 0);
+    };
+    const toDbId = (x: string) => { return x.split('_')[1]; };
+    const params = [{ topN: 10 }, { v: toDbId(ele.id()) }];
+    this._dbApi.runStoredProcedure(fn, 'inchiSimilarity', params);
   }
 
   getNeighbors(e) {
