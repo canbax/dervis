@@ -9,23 +9,23 @@
     "test": "ng test"
   },
   "engines": {
-    "node": "16.13.1",
-    "npm": "8.5.4"
+    "node": "16.13.2",
+    "npm": "8.6.0"
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "~13.3.1",
+    "@angular/animations": "~13.3.2",
     "@angular/cdk": "^13.3.2",
-    "@angular/common": "~13.3.1",
-    "@angular/compiler": "~13.3.1",
-    "@angular/core": "~13.3.1",
-    "@angular/forms": "~13.3.1",
+    "@angular/common": "~13.3.2",
+    "@angular/compiler": "~13.3.2",
+    "@angular/core": "~13.3.2",
+    "@angular/forms": "~13.3.2",
     "@angular/material": "^13.3.2",
-    "@angular/platform-browser": "~13.3.1",
-    "@angular/platform-browser-dynamic": "~13.3.1",
-    "@angular/router": "~13.3.1",
-    "@angular/service-worker": "~13.3.1",
-    "cytoscape": "^3.21.0",
+    "@angular/platform-browser": "~13.3.2",
+    "@angular/platform-browser-dynamic": "~13.3.2",
+    "@angular/router": "~13.3.2",
+    "@angular/service-worker": "~13.3.2",
+    "cytoscape": "^3.21.1",
     "cytoscape-context-menus": "github:iVis-at-Bilkent/cytoscape.js-context-menus#unstable",
     "cytoscape-expand-collapse": "github:iVis-at-Bilkent/cytoscape.js-expand-collapse#unstable",
     "cytoscape-fcose": "^2.1.0",
@@ -35,9 +35,9 @@
     "zone.js": "~0.11.5"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~13.3.1",
-    "@angular/cli": "~13.3.1",
-    "@angular/compiler-cli": "~13.3.1",
+    "@angular-devkit/build-angular": "~13.3.2",
+    "@angular/cli": "~13.3.2",
+    "@angular/compiler-cli": "~13.3.2",
     "@types/jasmine": "~4.0.2",
     "@types/node": "^17.0.23",
     "jasmine-core": "~4.0.1",
