@@ -18,6 +18,10 @@ body {
   width: 100%;
 }
 
+.h100 {
+  height: 100%;
+}
+
 .w90 {
   width: 90%;
 }
@@ -38,4 +42,8 @@ body {
 
 .center-txt {
   text-align: center;
+}
+
+.d-flex {
+  display: flex;
 }

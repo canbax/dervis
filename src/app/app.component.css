@@ -44,3 +44,14 @@
   -ms-transform: translate(-25%, -25%);
   z-index: 1005;
 }
+
+
+.resizer {
+  height: 100%;
+  width: 5px;
+  cursor: col-resize;
+}
+
+.resizer:hover {
+  background-color: #ff4081;
+}

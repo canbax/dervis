@@ -11,6 +11,9 @@ export class AppComponent implements OnInit {
 
   selectedRightTabIdx = 0;
   isLoading = true;
+  isResizing = false;
+  isAutoSizeSideNav: boolean = false;
+  widthRatioCSS = '30vw';
   constructor(private _dbApi: TigerGraphApiClientService, private _s: SharedService) {
 
   }
@@ -59,10 +62,36 @@ export class AppComponent implements OnInit {
     this._s.goForwardInGraphHistory();
   }
 
+  private refreshSideNav() {
+    this.isAutoSizeSideNav = true;
+    setTimeout(() => this.isAutoSizeSideNav = false, 1);
+  }
+
   @HostListener('document:keydown.delete', ['$event'])
   deleteSelected() {
     this._s.deleteSelected();
     this._s.add2GraphHistory('selected deleted');
+  }
+
+  @HostListener('document:mousedown', ['$event'])
+  click2resizer() {
+    this.isResizing = true;
+  }
+
+  @HostListener('document:mousemove', ['$event'])
+  resizing($event) {
+    if (!this.isResizing) {
+      return;
+    }
+    const x = $event.clientX;
+    const wid = window.innerWidth;
+    this.widthRatioCSS = Math.floor((wid - x) / (wid) * 100) + 'vw';
+    this.refreshSideNav();
+  }
+
+  @HostListener('document:mouseup', ['$event'])
+  mouseUp() {
+    this.isResizing = false;
   }
 
 }
