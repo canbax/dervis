@@ -44,7 +44,7 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
 
   showObjProps() {
     const d = this._s.cy.$(':selected').data();
-    if (!d) {
+    if (typeof d != "object") {
       return;
     }
     this.isShowTable = false;
@@ -80,7 +80,11 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
       data.push(d);
       const keys = Object.keys(d);
       for (let j = 0; j < keys.length; j++) {
-        if (this._s.showCertainPropsInTable && this._s.showCertainPropsInTable[keys[j]]) {
+        if (typeof this._s.showCertainPropsInTable == "object") {
+          if (this._s.showCertainPropsInTable[keys[j]]) {
+            colsDict[keys[j]] = true;
+          }
+        } else {
           colsDict[keys[j]] = true;
         }
       }

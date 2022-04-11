@@ -75,7 +75,6 @@ export class AppComponent implements OnInit {
 
   click2resizer() {
     this.isResizing = true;
-    console.log("clicked to resize");
   }
 
   @HostListener('document:mousemove', ['$event'])
@@ -91,7 +90,6 @@ export class AppComponent implements OnInit {
 
   @HostListener('document:mouseup', ['$event'])
   mouseUp() {
-    console.log("resize FALSE");
     this.isResizing = false;
   }
 
