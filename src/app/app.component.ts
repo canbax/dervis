@@ -73,9 +73,9 @@ export class AppComponent implements OnInit {
     this._s.add2GraphHistory('selected deleted');
   }
 
-  @HostListener('document:mousedown', ['$event'])
   click2resizer() {
     this.isResizing = true;
+    console.log("clicked to resize");
   }
 
   @HostListener('document:mousemove', ['$event'])
@@ -91,6 +91,7 @@ export class AppComponent implements OnInit {
 
   @HostListener('document:mouseup', ['$event'])
   mouseUp() {
+    console.log("resize FALSE");
     this.isResizing = false;
   }
 
