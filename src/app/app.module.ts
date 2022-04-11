@@ -38,6 +38,7 @@ import { SettingsComponent } from './settings/settings.component';
 import { ObjectPropertiesComponent } from './object-properties/object-properties.component';
 import { TableViewComponent } from './table-view/table-view.component';
 import { DbQueryComponent } from './db-query/db-query.component';
+import { InputNumberDialogComponent } from './input-number-dialog/input-number-dialog.component';
 
 @NgModule({
   declarations: [
@@ -48,6 +49,7 @@ import { DbQueryComponent } from './db-query/db-query.component';
     ObjectPropertiesComponent,
     TableViewComponent,
     DbQueryComponent,
+    InputNumberDialogComponent,
   ],
   imports: [
     MatSidenavModule,

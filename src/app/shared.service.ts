@@ -13,6 +13,7 @@ import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { GENERAL_CY_STYLE } from './config/general-cy-style';
 import { TigerGraphApiClientService } from './tiger-graph-api.service';
 import { SettingsService } from './settings.service';
+import { InputNumberDialogComponent } from './input-number-dialog/input-number-dialog.component';
 
 @Injectable({
   providedIn: 'root'
@@ -289,6 +290,12 @@ export class SharedService {
         selector: 'node.Compound',
         onClickFunction: this.getInchiSimilarity2Existing.bind(this)
       },
+      {
+        id: 'jaccardSimilarity',
+        content: 'Get Jaccard similarity',
+        selector: 'node',
+        onClickFunction: this.getJaccardSimilarity.bind(this)
+      },
       ],
       // css classes that menu items will have
       menuItemClasses: ['mat-menu-item', 'ctx-menu-i'],
@@ -341,6 +348,43 @@ export class SharedService {
     const compoundIds = this.cy.nodes('.Compound').not('#' + ele.id()).map((x) => { return { l: toDbId(x.id()) } });
     const params = [{ topN: 100 }, { v: toDbId(ele.id()) }, ...compoundIds];
     this._dbApi.runStoredProcedure(fn, 'inchiSimilarity', params);
+  }
+
+  // compute jaccard similarity between selected node and all the others from the same type
+  private getJaccardSimilarity(e) {
+    const ele = e.target || e.cyTarget;
+    if (!ele) {
+      return;
+    }
+    const dialogRef = this.dialog.open(InputNumberDialogComponent, {
+      width: '250px',
+      data: { prompt: "For how many nodes?", num: 100 },
+    });
+
+    dialogRef.afterClosed().subscribe((result: number) => {
+      this.isLoading.next(true);
+      const fn = (x) => {
+        this.isLoading.next(false);
+        const nodeData = x.nodes[0]['Others'];
+        for (let i = 0; i < nodeData.length; i++) {
+          const v = nodeData[i]['attributes']['Others.@sum_similarity'];
+          delete nodeData[i]['attributes']['Others.@sum_similarity'];
+          nodeData[i]['attributes']['Jaccard_similarity'] = v;
+        }
+        this.loadGraph({ edges: [], nodes: nodeData });
+        this.cy.$().unselect();
+        const loadedIds = nodeData.map(x => 'n_' + x.v_id);
+        for (let id of loadedIds) {
+          this.cy.$id(id).select();
+        }
+        console.log(x);
+      };
+      const toDbId = (x: string) => { return x.split('_')[1]; };
+      const t = ele.classes()[0];
+      const params = [{ source: toDbId(ele.id()) }, { vertexType: t }, { top_k: Number(result) }, { 'source.type': t }];
+      this._dbApi.runStoredProcedure(fn, 'tg_jaccard_nbor_ss', params);
+    });
+
   }
 
   private getInchiSimilarity2All(e) {

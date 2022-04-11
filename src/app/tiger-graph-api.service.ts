@@ -36,9 +36,7 @@ export class TigerGraphApiClientService implements DbClient {
       .subscribe({
         next: x => {
           if (x['error']) {
-            const dialogRef = this.dialog.open(ErrorDialogComponent);
-            dialogRef.componentInstance.title = 'Error on http request';
-            dialogRef.componentInstance.content = JSON.stringify(x);
+            this.errFn({ message: JSON.stringify(x['error']) })
             return;
           }
           console.log('resp: ', x);
@@ -56,9 +54,7 @@ export class TigerGraphApiClientService implements DbClient {
       .subscribe({
         next: x => {
           if (x['error']) {
-            const dialogRef = this.dialog.open(ErrorDialogComponent);
-            dialogRef.componentInstance.title = 'Error on http request';
-            dialogRef.componentInstance.content = JSON.stringify(x);
+            this.errFn({ message: JSON.stringify(x['error']) })
             return;
           }
           cb(x);
@@ -129,15 +125,12 @@ export class TigerGraphApiClientService implements DbClient {
     this._http.post(`${this.url}/query`, body, { headers: { 'Content-Type': 'application/json' } }).subscribe({
       next: x => {
         if (x['error']) {
-          const dialogRef = this.dialog.open(ErrorDialogComponent);
-          dialogRef.componentInstance.title = 'Error on http request';
-          dialogRef.componentInstance.content = JSON.stringify(x);
+          this.errFn({ message: JSON.stringify(x['error']) })
           return;
         }
         if (cb) {
           cb(x);
         }
-        console.log('resp: ', x);
       }, error: this.errFn
     });
   }
