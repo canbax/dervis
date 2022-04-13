@@ -14,6 +14,7 @@ import { GENERAL_CY_STYLE } from './config/general-cy-style';
 import { TigerGraphApiClientService } from './tiger-graph-api.service';
 import { SettingsService } from './settings.service';
 import { InputNumberDialogComponent } from './input-number-dialog/input-number-dialog.component';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable({
   providedIn: 'root'
@@ -38,7 +39,7 @@ export class SharedService {
   currentHistoryIdx = 0;
   showCertainPropsInTable: any = false;
 
-  constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService) {
+  constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService, private _snackBar: MatSnackBar,) {
     let isGraphEmpty = () => { return this.cy.elements().not(':hidden, :transparent').length > 0 };
     this.performLayout = debounce(this.runLayout, LAYOUT_ANIM_DUR, true, isGraphEmpty);
     this._dbApi.onErrFn = () => { this.isLoading.next(false) };
@@ -296,6 +297,12 @@ export class SharedService {
         selector: 'node',
         onClickFunction: this.getJaccardSimilarity.bind(this)
       },
+      {
+        id: 'getElemData',
+        content: 'Get attributes',
+        selector: 'node',
+        onClickFunction: this.getAttributes.bind(this)
+      },
       ],
       // css classes that menu items will have
       menuItemClasses: ['mat-menu-item', 'ctx-menu-i'],
@@ -389,6 +396,29 @@ export class SharedService {
       this._dbApi.runStoredProcedure(fn, 'jaccardSimilarity', params);
     });
 
+  }
+
+  private getAttributes(e) {
+    const ele = e.target || e.cyTarget;
+    if (!ele) {
+      return;
+    }
+    const dbId = ele.id().split('_')[1];
+    const graph = this._conf.appConf.tigerGraphDbConfig.graphName.getValue();
+    const gsql = `INTERPRET QUERY () FOR GRAPH ${graph} {   
+      start =   {ANY};
+      results = SELECT s FROM start:s WHERE s.Id == "${dbId}";
+      PRINT results;
+  }`
+    this._dbApi.runQuery(gsql, (x) => {
+      if (!x || !(x.results)) {
+        this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
+        return;
+      }
+      this.loadGraph({ nodes: x.results[0].results, edges: [] });
+      this.cy.$().unselect();
+      ele.select();
+    });
   }
 
   private getInchiSimilarity2All(e) {
@@ -586,13 +616,15 @@ export class SharedService {
         continue;
       }
       node.attributes.id = 'n_' + node.v_id;
-      if (this.cy.$id(node.attributes.id).length > 0) {
+      const cyNode = this.cy.$id(node.attributes.id);
+      if (cyNode.length > 0) {
+        cyNode.data(node.attributes);
         continue;
       }
       node_ids[node.v_id] = true;
       this.cy.add({ data: node.attributes, classes: node.v_type });
       if (!this.isRandomizedLayout) {
-        this.viewUtils.highlight(this.cy.$id(node.attributes.id), currHiglightIdx);
+        this.viewUtils.highlight(cyNode, currHiglightIdx);
       }
       isAddedNew = true;
     }
@@ -603,8 +635,9 @@ export class SharedService {
       edge.attributes.source = fromId;
       edge.attributes.target = toId;
       edge.attributes.id = 'e_' + fromId + '-' + toId;
-
-      if (this.cy.$id(edge.attributes.id).length > 0) {
+      const cyEdge = this.cy.$id(edge.attributes.id);
+      if (cyEdge.length > 0) {
+        cyEdge.data(edge.attributes);
         continue;
       }
       if (this.cy.$id(fromId).length < 1 || this.cy.$id(toId).length < 1) {
@@ -612,7 +645,7 @@ export class SharedService {
       }
       this.cy.add({ data: edge.attributes, classes: edge.e_type });
       if (!this.isRandomizedLayout) {
-        this.viewUtils.highlight(this.cy.$id(edge.attributes.id), currHiglightIdx);
+        this.viewUtils.highlight(cyEdge, currHiglightIdx);
       }
       isAddedNew = true;
     }
