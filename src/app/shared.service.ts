@@ -368,11 +368,12 @@ export class SharedService {
       this.isLoading.next(true);
       const fn = (x) => {
         this.isLoading.next(false);
-        const nodeData = x.nodes[0]['Others'];
+        const nodeData = x.nodes[0].results;
+        const scoreAttrib = 'results.@score';
         for (let i = 0; i < nodeData.length; i++) {
-          const v = nodeData[i]['attributes']['Others.@sum_similarity'];
-          delete nodeData[i]['attributes']['Others.@sum_similarity'];
-          nodeData[i]['attributes']['Jaccard_similarity'] = v;
+          const v = nodeData[i]['attributes'][scoreAttrib];
+          delete nodeData[i]['attributes'][scoreAttrib];
+          nodeData[i]['attributes']['jaccard_similarity'] = v;
         }
         this.loadGraph({ edges: [], nodes: nodeData });
         this.cy.$().unselect();
@@ -385,7 +386,7 @@ export class SharedService {
       const toDbId = (x: string) => { return x.split('_')[1]; };
       const t = ele.classes()[0];
       const params = [{ source: toDbId(ele.id()) }, { vertexType: t }, { top_k: Number(result) }, { 'source.type': t }];
-      this._dbApi.runStoredProcedure(fn, 'tg_jaccard_nbor_ss', params);
+      this._dbApi.runStoredProcedure(fn, 'jaccardSimilarity', params);
     });
 
   }
