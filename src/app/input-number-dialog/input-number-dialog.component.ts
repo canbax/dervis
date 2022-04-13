@@ -17,6 +17,10 @@ export class InputNumberDialogComponent implements OnInit {
     this.dialogRef.close();
   }
 
+  passData() {
+    this.dialogRef.close(this.data.num);
+  }
+
   ngOnInit(): void {
   }
 

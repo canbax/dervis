@@ -362,6 +362,9 @@ export class SharedService {
     });
 
     dialogRef.afterClosed().subscribe((result: number) => {
+      if (result === undefined) {
+        return;
+      }
       this.isLoading.next(true);
       const fn = (x) => {
         this.isLoading.next(false);
