@@ -238,6 +238,12 @@ export class SharedService {
         onClickFunction: () => { this.isRandomizedLayout = false; this.performLayout(); }
       },
       {
+        id: 'recalculateLayout',
+        content: 'Recalculate Layout',
+        coreAsWell: true,
+        onClickFunction: () => { this.isRandomizedLayout = true; this.performLayout(); }
+      },
+      {
         id: 'deleteSelected',
         content: 'Delete Selected',
         coreAsWell: true,
