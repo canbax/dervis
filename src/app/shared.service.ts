@@ -298,6 +298,12 @@ export class SharedService {
         onClickFunction: this.getInchiSimilarity2Existing.bind(this)
       },
       {
+        id: 'adamicAdar4visible',
+        content: 'Get Adamic–Adar index',
+        selector: 'node',
+        onClickFunction: this.getAdamicAdar2Existing.bind(this)
+      },
+      {
         id: 'jaccardSimilarity',
         content: 'Get Jaccard similarity',
         selector: 'node',
@@ -361,6 +367,47 @@ export class SharedService {
     const compoundIds = this.cy.nodes('.Compound').not('#' + ele.id()).map((x) => { return { l: toDbId(x.id()) } });
     const params = [{ topN: 100 }, { v: toDbId(ele.id()) }, ...compoundIds];
     this._dbApi.runStoredProcedure(fn, 'inchiSimilarity', params);
+  }
+
+  private getAdamicAdar2Existing(e) {
+    const ele = e.target || e.cyTarget;
+    if (!ele) {
+      return;
+    }
+    this.isLoading.next(true);
+    const fn = (x) => {
+      this.isLoading.next(false);
+      if (!x.nodes[0]) {
+        return;
+      }
+      const dists = x.nodes[0]['@@sum_closeness'];
+      let elems = this.cy.collection();
+      for (let k in dists) {
+        const elem = this.cy.$id('n_' + k);
+        elem.data('adamic_adar', dists[k]);
+        elems = elems.union(elem);
+      }
+      elems.select();
+      this.showCertainPropsInTable = { id: true, adamic_adar: true };
+      setTimeout(() => {
+        this.showCertainPropsInTable = false;
+      }, 1000);
+    };
+    const toDbId = (x: string) => { return x.split('_')[1]; };
+    const targetIds = this.cy.nodes().not('#' + ele.id()).map((x, i) => {
+      const k = `targets[${i}]`;
+      const o = {};
+      o[k] = toDbId(x.id());
+      return o
+    });
+    const targetTypes = this.cy.nodes().not('#' + ele.id()).map((x, i) => {
+      const k = `targets[${i}].type`;
+      const o = {};
+      o[k] = x.classes()[0];
+      return o
+    });
+    const params = [{ source: toDbId(ele.id()) }, { 'source.type': ele.classes()[0] }, ...targetIds, ...targetTypes];
+    this._dbApi.runStoredProcedure(fn, 'adamicAdar', params);
   }
 
   // compute jaccard similarity between selected node and all the others from the same type

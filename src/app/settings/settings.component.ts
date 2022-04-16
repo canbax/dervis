@@ -50,6 +50,7 @@ export class SettingsComponent {
       this.tigerGraphDbConf.tokenExpire = x.expiration;
       this.tigerGraphDbConf.token = x.results.token;
       this.changeTigerGraphDbConfigs();
+      this._s.isLoading.next(false);
     });
   }
 
