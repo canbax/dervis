@@ -6,7 +6,7 @@ import contextMenus from 'cytoscape-context-menus';
 import viewUtilities from 'cytoscape-view-utilities';
 
 import { Layout, LAYOUT_ANIM_DUR, expandCollapseCuePosition, EXPAND_COLLAPSE_CUE_SIZE, debounce, MAX_HIGHLIGHT_CNT, deepCopy, COLLAPSED_EDGE_CLASS, COMPOUND_CLASS, COLLAPSED_NODE_CLASS, OBJ_INFO_UPDATE_DELAY, isPrimitiveType, getCyStyleFromColorAndWid, EXPAND_COLLAPSE_FAST_OPT } from './constants';
-import { GraphResponse, NodeResponse, InterprettedQueryResult, TableData, isNodeResponse, isEdgeResponse, EdgeResponse, GraphHistoryItem } from './data-types';
+import { GraphResponse, NodeResponse, InterprettedQueryResult, TableData, isNodeResponse, isEdgeResponse, EdgeResponse, GraphHistoryItem, SchemaOutput } from './data-types';
 import { Subject, BehaviorSubject } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
@@ -38,6 +38,8 @@ export class SharedService {
   metaEdge2edge = {};
   currentHistoryIdx = 0;
   showCertainPropsInTable: any = false;
+  onGetDbSchema: Function[] = [];
+  contextMenusAPI = null;
 
   constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService, private _snackBar: MatSnackBar,) {
     let isGraphEmpty = () => { return this.cy.elements().not(':hidden, :transparent').length > 0 };
@@ -83,6 +85,45 @@ export class SharedService {
 
     this.bindComponentSelector();
     this.addFnStyles();
+    this.onGetDbSchema.push(this.addContexMenus4DbSchema.bind(this));
+    this._dbApi.getGraphSchema((x: SchemaOutput) => {
+      for (let i = 0; i < this.onGetDbSchema.length; i++) {
+        this.onGetDbSchema[i](x);
+      }
+    });
+  }
+
+  private addContexMenus4DbSchema(x: SchemaOutput) {
+    let undirectedEdges = {}; // 2-level dictionary
+    for (let eType of x.results.EdgeTypes) {
+      if (!undirectedEdges[eType.FromVertexTypeName]) {
+        undirectedEdges[eType.FromVertexTypeName] = {};
+      }
+      undirectedEdges[eType.FromVertexTypeName][eType.ToVertexTypeName] = true;
+
+      if (!undirectedEdges[eType.ToVertexTypeName]) {
+        undirectedEdges[eType.ToVertexTypeName] = {};
+      }
+      undirectedEdges[eType.ToVertexTypeName][eType.FromVertexTypeName] = true;
+    }
+    let items = [];
+    for (let i in undirectedEdges) {
+      let submenu = [];
+      for (let j in undirectedEdges[i]) {
+        submenu.push({
+          id: `neighborsOf${i}4type${j}`,
+          content: j,
+          onClickFunction: (e) => { this.getNeighbors(e, j); },
+        })
+      }
+      items.push({
+        id: `neighborsOf${i}4type`,
+        content: `Get neigbors for type`,
+        submenu: submenu,
+        selector: `node.${i}`,
+      });
+    }
+    this.contextMenusAPI.appendMenuItems(items);
   }
 
   private magnifyOnHover() {
@@ -286,12 +327,6 @@ export class SharedService {
         onClickFunction: this.deleteSelected.bind(this)
       },
       {
-        id: 'getneighbors',
-        content: 'Get Neighbors',
-        selector: 'node',
-        onClickFunction: this.getNeighbors.bind(this)
-      },
-      {
         id: 'inchi4visible',
         content: 'Get inchi similarity',
         selector: 'node.Compound',
@@ -315,17 +350,23 @@ export class SharedService {
         selector: 'node',
         onClickFunction: this.getAttributes.bind(this)
       },
+      {
+        id: 'getneighbors',
+        content: 'Get all neighbors',
+        selector: 'node',
+        onClickFunction: (e) => { this.getNeighbors(e, ''); },
+      },
       ],
-      // css classes that menu items will have
-      menuItemClasses: ['mat-menu-item', 'ctx-menu-i'],
-      // menuItemClasses: [],
-      // css classes that context menu will have
-      contextMenuClasses: ['mat-menu-content', 'ctx-menu-container']
-      // contextMenuClasses: []
+      menuItemClasses: ['mat-menu-item', 'ctx-menu-item'],
+      contextMenuClasses: ['mat-menu-content', 'ctx-menu-container'],
+      submenuIndicator: {
+        src: 'assets/icons/arrow_right.svg',
+        width: 24,
+        height: 24,
+      },
     };
-    this.cy.contextMenus(options);
+    this.contextMenusAPI = this.cy.contextMenus(options);
     this.cy.pan(this.cy.pan());
-    // this.cy.contextMenus('get')
   }
 
   getHighlightStyles(): any[] {
@@ -492,7 +533,7 @@ export class SharedService {
     this._dbApi.runStoredProcedure(fn, 'inchiSimilarity', params);
   }
 
-  getNeighbors(e) {
+  getNeighbors(e, otherNodeType: string) {
     const ele = e.target || e.cyTarget;
     if (!ele) {
       return;
@@ -502,7 +543,7 @@ export class SharedService {
       this.loadGraph(x);
       this.add2GraphHistory('get neighbors of node');
     };
-    this._dbApi.getNeighborsOfNode(fn, ele);
+    this._dbApi.getNeighborsOfNode(fn, ele, otherNodeType);
   }
 
   selectAllThisType(event) {
@@ -1031,5 +1072,4 @@ export class SharedService {
 
     return { data: properties, classes: classes };
   }
-
 }

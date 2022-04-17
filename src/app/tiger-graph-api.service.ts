@@ -89,7 +89,7 @@ export class TigerGraphApiClientService implements DbClient {
       });
   }
 
-  getNeighborsOfNode(cb: (r: GraphResponse) => void, elem: any) {
+  getNeighborsOfNode(cb: (r: GraphResponse) => void, elem: any, otherNodeType: string = '') {
     const id = elem.id().substring(2);
     const vertexType = this.dataSchema.VertexTypes.find(x => x.Name == elem.classes()[0]);
 
@@ -99,7 +99,7 @@ export class TigerGraphApiClientService implements DbClient {
       seed = {ANY};
     
       results = SELECT t
-               FROM seed:s -(:e)-:t
+               FROM seed:s -(:e)-${otherNodeType}:t
                WHERE s.${vertexType.PrimaryId.AttributeName} == "${id}"
                ACCUM @@edgeList += e;
       

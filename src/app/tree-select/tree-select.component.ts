@@ -147,25 +147,25 @@ export class TreeSelectComponent {
       this.dataSource.data = data;
     });
     this.filterSchemaDebounced = debounce(this.onSearch, 250, false);
+    this._s.onGetDbSchema.push(this.createFromSchema.bind(this));
+  }
 
-    this._dbApi.getGraphSchema((x: SchemaOutput) => {
-      console.log(x);
-      let tree = { 'Vertex': {}, 'Edge': {} };
-      const cntEdgeType = x.results.EdgeTypes.length;
-      const cntVertexType = x.results.VertexTypes.length;
-      this.vertexPrimaryIds = {};
-      this.parseSchemaData(tree, x.results.EdgeTypes, false);
-      this.parseSchemaData(tree, x.results.VertexTypes, true);
-      this.vertexKey = `Vertex (${cntVertexType})`;
-      // rename vertex and edge
-      tree[this.vertexKey] = tree['Vertex'];
-      delete tree['Vertex'];
+  private createFromSchema(x: SchemaOutput) {
+    let tree = { 'Vertex': {}, 'Edge': {} };
+    const cntEdgeType = x.results.EdgeTypes.length;
+    const cntVertexType = x.results.VertexTypes.length;
+    this.vertexPrimaryIds = {};
+    this.parseSchemaData(tree, x.results.EdgeTypes, false);
+    this.parseSchemaData(tree, x.results.VertexTypes, true);
+    this.vertexKey = `Vertex (${cntVertexType})`;
+    // rename vertex and edge
+    tree[this.vertexKey] = tree['Vertex'];
+    delete tree['Vertex'];
 
-      this.edgeKey = `Edge (${cntEdgeType})`;
-      tree[this.edgeKey] = tree['Edge'];
-      delete tree['Edge'];
-      this._database.initialize(tree);
-    });
+    this.edgeKey = `Edge (${cntEdgeType})`;
+    tree[this.edgeKey] = tree['Edge'];
+    delete tree['Edge'];
+    this._database.initialize(tree);
   }
 
   private parseSchemaData(tree: any, typeArr: TigerGraphVertexType[] | TigerGraphEdgeType[], isVertex: boolean) {
