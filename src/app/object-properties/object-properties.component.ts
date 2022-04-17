@@ -61,7 +61,14 @@ export class ObjectPropertiesComponent implements OnInit, OnDestroy {
   // if multiple objects from the same type is selected, show a table
   prepareTableIfNeeded() {
     this.isShowTable = true;
-    const elems = this._s.cy.$(':selected');
+    let elems = this._s.cy.$(':selected');
+    let elems2add = this._s.cy.collection();
+    for (let i = 0; i < elems.length; i++) {
+      if (elems[i].isParent()) {
+        elems2add.merge(elems[i].children());
+      }
+    }
+    elems = elems.not(':parent').union(elems2add);
     const classes = {};
     for (let i = 0; i < elems.length; i++) {
       classes[elems[i].classes()[0]] = true;

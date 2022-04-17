@@ -627,6 +627,7 @@ export class SharedService {
   }
 
   deleteSelected(event = null) {
+    this.add2GraphHistory('delete selected', true);
     if (event) {
       const ele = event.target || event.cyTarget;
       if (ele) {
@@ -638,6 +639,7 @@ export class SharedService {
   }
 
   deleteUnselected() {
+    this.add2GraphHistory('delete unselected', true);
     this.cy.remove(':unselected');
   }
 
@@ -672,12 +674,13 @@ export class SharedService {
       const cyNode = this.cy.$id(node.attributes.id);
       if (cyNode.length > 0) {
         cyNode.data(node.attributes);
+        this.viewUtils.highlight(cyNode, currHiglightIdx);
         continue;
       }
       node_ids[node.v_id] = true;
-      this.cy.add({ data: node.attributes, classes: node.v_type });
+      const newNode = this.cy.add({ data: node.attributes, classes: node.v_type });
       if (!this.isRandomizedLayout) {
-        this.viewUtils.highlight(cyNode, currHiglightIdx);
+        this.viewUtils.highlight(newNode, currHiglightIdx);
       }
       isAddedNew = true;
     }
@@ -691,14 +694,15 @@ export class SharedService {
       const cyEdge = this.cy.$id(edge.attributes.id);
       if (cyEdge.length > 0) {
         cyEdge.data(edge.attributes);
+        this.viewUtils.highlight(cyEdge, currHiglightIdx);
         continue;
       }
       if (this.cy.$id(fromId).length < 1 || this.cy.$id(toId).length < 1) {
         continue;
       }
-      this.cy.add({ data: edge.attributes, classes: edge.e_type });
+      const newEdge = this.cy.add({ data: edge.attributes, classes: edge.e_type });
       if (!this.isRandomizedLayout) {
-        this.viewUtils.highlight(cyEdge, currHiglightIdx);
+        this.viewUtils.highlight(newEdge, currHiglightIdx);
       }
       isAddedNew = true;
     }
@@ -751,6 +755,16 @@ export class SharedService {
     for (let src in node2node) {
       for (let edgeType in node2node[src]) {
         if (node2node[src][edgeType].length < this.CROWDED_NEI_LIMIT) {
+          continue;
+        }
+        let hasParent = false;
+        for (let i = 0; i < node2node[src][edgeType].length; i++) {
+          if (this.cy.$id(node2node[src][edgeType][i]).parent().length > 0) {
+            hasParent = true;
+            break;
+          }
+        }
+        if (hasParent) {
           continue;
         }
         const parentId = new Date().getTime();
@@ -886,8 +900,8 @@ export class SharedService {
     this.endlessOpacityAnim();
   }
 
-  add2GraphHistory(expo: string) {
-    setTimeout(() => {
+  add2GraphHistory(expo: string, isImmediate = true) {
+    const fn = () => {
       if (this.graphHistory.length > this._conf.appConf.graphHistoryLimit.getValue() - 1) {
         this.graphHistory.splice(0, 1);
       }
@@ -903,7 +917,12 @@ export class SharedService {
       this.graphHistory.push(g);
       this.currentHistoryIdx = this.graphHistory.length - 1;
       this.addNewGraphHistoryItem.next(true);
-    }, LAYOUT_ANIM_DUR);
+    };
+    if (isImmediate) {
+      fn();
+    } else {
+      setTimeout(fn, LAYOUT_ANIM_DUR);
+    }
   }
 
   goBackInGraphHistory() {

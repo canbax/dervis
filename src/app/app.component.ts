@@ -121,7 +121,6 @@ export class AppComponent implements OnInit {
   @HostListener('document:keydown.delete', ['$event'])
   deleteSelected() {
     this._s.deleteSelected();
-    this._s.add2GraphHistory('selected deleted');
   }
 
   click2resizer() {
