@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SettingsService } from './settings.service';
-import { InterprettedQueryResult, GraphResponse, DbClient, SchemaOutput, TigerGraphVertexType, TigerGraphEdgeType } from './data-types';
+import { InterprettedQueryResult, GraphResponse, DbClient, SchemaOutput, TigerGraphVertexType, TigerGraphEdgeType, TigerGraphDbConfig } from './data-types';
 import { MatDialog } from '@angular/material/dialog';
-import { ErrorDialogComponent } from './error-dialog/error-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable({
@@ -24,7 +23,7 @@ export class TigerGraphApiClientService implements DbClient {
   }
 
   private errFn = (err: { message: string; }) => {
-    this._snackBar.open('Error in http request: ' + err.message, 'close');
+    this._snackBar.open('Error in http request: ' + err.message, 'x');
     if (this.onErrFn && typeof this.onErrFn == "function") {
       this.onErrFn();
     }
@@ -58,6 +57,8 @@ export class TigerGraphApiClientService implements DbClient {
             return;
           }
           cb(x);
+          this._c.appConf.tigerGraphDbConfig.isConnected.next(true);
+          this._c.setAppConfig();
           console.log('resp: ', x);
         }, error: this.errFn
       });
@@ -66,6 +67,9 @@ export class TigerGraphApiClientService implements DbClient {
   // In terms of TigerGraph this is an InterPretted Query, https://docs.tigergraph.com/dev/gsql-ref/querying/query-operations#interpret-query
   runQuery(q: string, cb: (r: InterprettedQueryResult) => void) {
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
+    if (!conf.isConnected) {
+      return;
+    }
     this._http.post(`${this.url}/gsql`, { q: q, username: conf.username, password: conf.password, url: conf.url },
       { headers: { 'Content-Type': 'application/json' } })
       .subscribe({ next: x => { cb(x as InterprettedQueryResult); }, error: this.errFn });
@@ -73,6 +77,9 @@ export class TigerGraphApiClientService implements DbClient {
 
   sampleData(cb: (r: GraphResponse) => void) {
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
+    if (!conf.isConnected) {
+      return;
+    }
     const gsql = `INTERPRET QUERY () FOR GRAPH ${conf.graphName} {   
       start =   {ANY};
       results = SELECT s FROM start:s -(:e)- :t LIMIT 10;
@@ -94,6 +101,9 @@ export class TigerGraphApiClientService implements DbClient {
     const vertexType = this.dataSchema.VertexTypes.find(x => x.Name == elem.classes()[0]);
 
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
+    if (!conf.isConnected) {
+      return;
+    }
     const gsql = `INTERPRET QUERY () FOR GRAPH ${conf.graphName} {   
       ListAccum<EDGE> @@edgeList;
       seed = {ANY};
@@ -121,6 +131,9 @@ export class TigerGraphApiClientService implements DbClient {
   // You should first create the query then install it then call it. Actually, it looks more similar to a "Stored Procedure" in SQL terminology.
   runStoredProcedure(cb: (arg0: Object) => void, query: string, params: any[]) {
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
+    if (!conf.isConnected) {
+      return;
+    }
     const body = { query: query, params: params, graphName: conf.graphName, url: conf.url, token: conf.token };
     this._http.post(`${this.url}/query`, body, { headers: { 'Content-Type': 'application/json' } }).subscribe({
       next: x => {
@@ -137,6 +150,9 @@ export class TigerGraphApiClientService implements DbClient {
 
   getStoredProcedures(cb: (r: any[]) => void) {
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
+    if (!conf.isConnected) {
+      return;
+    }
     this._http.post(`${this.url}/endpoints`, { url: conf.url, token: conf.token }).subscribe({
       next: x => {
         const keyNames4query = Object.keys(x).filter(x => x.includes('/query/'));
@@ -155,6 +171,9 @@ export class TigerGraphApiClientService implements DbClient {
 
   getGraphSchema(cb) {
     const conf = this._c.getConfAsJSON().tigerGraphDbConfig;
+    if (!conf.isConnected) {
+      return;
+    }
     this._http.post(`${this.url}/schema`,
       {
         url: conf.url, graph: conf.graphName,

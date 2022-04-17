@@ -28,23 +28,28 @@ export class DbQueryComponent implements OnInit {
 
   ngOnInit(): void {
     this.queries = this._settings.getAllDbQueries();
-    this._dbApi.getStoredProcedures((x) => {
-      this.installedQueries = [];
-
-      for (const o of x) {
-        const obj: InstalledDbQuery = { name: '', params: [] };
-        for (const k in o) {
-          if (k === 'query') {
-            obj.name = o[k].default;
-          } else {
-            const o2 = {};
-            o2[k] = o[k];
-            const s = JSON.stringify(o2, null, 4).substr(2).slice(0, -2).replace('"', '').replace('"', '').trim();
-            obj.params.push({ desc: s, inp: '', name: k, obj: o[k] });
-          }
-        }
-        this.installedQueries.push(obj);
+    this._settings.appConf.tigerGraphDbConfig.isConnected.subscribe(x => {
+      if (!x) {
+        return;
       }
+      this._dbApi.getStoredProcedures((x) => {
+        this.installedQueries = [];
+        for (const o of x) {
+          const obj: InstalledDbQuery = { name: '', params: [] };
+          for (const k in o) {
+            if (k === 'query') {
+              obj.name = o[k].default;
+            } else {
+              const o2 = {};
+              o2[k] = o[k];
+              const s = JSON.stringify(o2, null, 4).substr(2).slice(0, -2).replace('"', '').replace('"', '').trim();
+              obj.params.push({ desc: s, inp: '', name: k, obj: o[k] });
+            }
+          }
+          this.installedQueries.push(obj);
+        }
+      });
+
     });
 
     if (this.queries && this.queries.length > 0) {
@@ -55,7 +60,7 @@ export class DbQueryComponent implements OnInit {
   runQuery() {
     this._dbApi.runQuery(this.gsql, (x) => {
       if (!x || !(x.results)) {
-        this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
+        this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'x');
         return;
       }
       this._s.loadGraph({ nodes: x.results[0].results, edges: [] });

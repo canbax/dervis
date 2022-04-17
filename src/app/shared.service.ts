@@ -41,7 +41,7 @@ export class SharedService {
   onGetDbSchema: Function[] = [];
   contextMenusAPI = null;
 
-  constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService, private _snackBar: MatSnackBar,) {
+  constructor(public dialog: MatDialog, private _dbApi: TigerGraphApiClientService, private _conf: SettingsService, private _snackBar: MatSnackBar) {
     let isGraphEmpty = () => { return this.cy.elements().not(':hidden, :transparent').length > 0 };
     this.performLayout = debounce(this.runLayout, LAYOUT_ANIM_DUR, true, isGraphEmpty);
     this._dbApi.onErrFn = () => { this.isLoading.next(false) };
@@ -86,11 +86,16 @@ export class SharedService {
     this.bindComponentSelector();
     this.addFnStyles();
     this.onGetDbSchema.push(this.addContexMenus4DbSchema.bind(this));
-    this._dbApi.getGraphSchema((x: SchemaOutput) => {
-      for (let i = 0; i < this.onGetDbSchema.length; i++) {
-        this.onGetDbSchema[i](x);
+    this._conf.appConf.tigerGraphDbConfig.isConnected.subscribe(x => {
+      if (!x) {
+        return;
       }
-    });
+      this._dbApi.getGraphSchema((x: SchemaOutput) => {
+        for (let i = 0; i < this.onGetDbSchema.length; i++) {
+          this.onGetDbSchema[i](x);
+        }
+      });
+    })
   }
 
   private addContexMenus4DbSchema(x: SchemaOutput) {
@@ -506,7 +511,7 @@ export class SharedService {
   }`
     this._dbApi.runQuery(gsql, (x) => {
       if (!x || !(x.results)) {
-        this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'close');
+        this._snackBar.open('Empty response from query: ' + JSON.stringify(x), 'x');
         return;
       }
       this.loadGraph({ nodes: x.results[0].results, edges: [] });

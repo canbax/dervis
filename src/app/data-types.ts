@@ -104,12 +104,13 @@ export interface AppConfig {
     tokenExpire: BehaviorSubject<number>;
     graphName: BehaviorSubject<string>;
     proxyUrl: BehaviorSubject<string>;
+    isConnected: BehaviorSubject<boolean>;
   },
   neo4jDbConfig: {
     url: BehaviorSubject<string>;
     username: BehaviorSubject<string>;
     password: BehaviorSubject<string>;
-  }
+  },
 }
 
 export interface TigerGraphDbConfig {

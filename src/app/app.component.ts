@@ -1,6 +1,8 @@
 import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { GENERAL_CY_STYLE } from './config/general-cy-style';
 import { readTxtFile } from './constants';
+import { SettingsService } from './settings.service';
 import { SharedService } from './shared.service';
 import { TigerGraphApiClientService } from './tiger-graph-api.service';
 
@@ -19,7 +21,7 @@ export class AppComponent implements OnInit {
   private loadFileType: 'LoadGraph' | 'LoadStyle' = 'LoadGraph';
   @ViewChild('fileInp', { static: false }) fileInp;
 
-  constructor(private _dbApi: TigerGraphApiClientService, private _s: SharedService) {
+  constructor(private _dbApi: TigerGraphApiClientService, private _s: SharedService, private _settings: SettingsService, private _snackBar: MatSnackBar) {
 
   }
 
@@ -34,6 +36,12 @@ export class AppComponent implements OnInit {
     this._s.elemSelectChanged.subscribe(fn);
     this._s.showTableChanged.subscribe(fn);
     this._s.isLoading.subscribe(x => { this.isLoading = x; });
+    this._settings.appConf.tigerGraphDbConfig.isConnected.subscribe(x => {
+      if (!x) {
+        this.selectedRightTabIdx = 3;
+        this._snackBar.open('Connect to TigerGraph!', 'x');
+      }
+    });
   }
 
   loadSampleData() {
